@@ -8,4 +8,13 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'football-squares';
+  selectedCount = 0;
+
+  updateSelectedCount(count: number) {
+    this.selectedCount = count;
+  }
+
+  finishSelection() {
+    alert(`You selected ${this.selectedCount} squares!`);
+  }
 }
