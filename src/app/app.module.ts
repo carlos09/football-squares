@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { GameGridComponent } from './game-grid/game-grid.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { SquarePickComponent } from './dialog/square-pick/square-pick.component';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { SquarePickComponent } from './dialog/square-pick/square-pick.component'
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    HttpClientModule
   ],
   providers: [
     provideAnimationsAsync()
