@@ -1,13 +1,14 @@
 
 <main class="flex items-center justify-center min-h-screen bg-gray-100">
   <div class="bg-white shadow-lg rounded-lg p-6 min-w-[820px] max-w-4xl w-full">
+      <h1 *ngIf="username.length > 1">Welcome {{ username }}</h1>
       <app-game-grid (selectionChanged)="updateSelectedCount($event)"></app-game-grid>
       <button 
         (click)="finishSelection()" 
         class="mt-4 px-4 py-2 bg-green-600 text-white rounded-md"
-        [disabled]="selectedCount === 0"
+        [disabled]="selectedSquares.length === 0"
     >
-        Finished selecting my squares ({{ selectedCount }})
+        Finished selecting my squares ({{ selectedSquares.length }})
     </button>
   </div>
 </main>

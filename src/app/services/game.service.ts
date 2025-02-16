@@ -10,9 +10,19 @@ export class GameService {
 
   constructor(private http: HttpClient) {}
 
-  createGame(): Observable<any> {
-    return this.http.post(`${this.baseUrl}/create-game`, {});
+  createGame() {
+    console.log('create game service');
+    const url_id = crypto.randomUUID();
+    return this.http.post<{ gameId: string, url_id: string }>(
+      `${this.baseUrl}/api/games`, 
+      { url_id }
+    );
   }
+    
+  
+  createUser(gameId: string, username: string, password: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/users`, { gameId, username, password });
+  }  
 
   getGame(gameId: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/game/${gameId}`);
@@ -21,4 +31,19 @@ export class GameService {
   joinGame(gameId: string, username: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/join-game`, { gameId, username });
   }
+
+  getUserById(userId: string) {
+    console.log('userId: ', userId);
+    return this.http.get<{ username: string }>(`/api/users/${userId}`);
+  }
+
+  postSquareSelections(gameId: string, userId: string, selectedSquares: number[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/save-selection`, { gameId, userId, selectedSquares });
+  }
+
+  getUserSelections(userId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/selections/${userId}`);
+  }
+  
+  
 }

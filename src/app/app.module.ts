@@ -7,17 +7,31 @@ import { GameGridComponent } from './game-grid/game-grid.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { SquarePickComponent } from './dialog/square-pick/square-pick.component';
 import { HttpClientModule } from '@angular/common/http';
+import { MatDialogModule } from '@angular/material/dialog';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { CreateUserDialogComponent } from './dialog/create-user-dialog/create-user-dialog.component';
+import { ConfrimDialogComponent } from './dialog/confrim-dialog/confrim-dialog.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     GameGridComponent,
-    SquarePickComponent
+    SquarePickComponent,
+    CreateUserDialogComponent,
+    ConfrimDialogComponent 
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    FormsModule
   ],
   providers: [
     provideAnimationsAsync()

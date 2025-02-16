@@ -9,17 +9,18 @@ import { SquarePickComponent } from '../dialog/square-pick/square-pick.component
   styleUrl: './game-grid.component.scss'
 })
 export class GameGridComponent {
-  @Output() selectionChanged = new EventEmitter<number>();
+  @Output() selectionChanged = new EventEmitter<number[]>();
 
   numbers = Array.from({ length: 100 }, (_, i) => i + 1);
-  selectedSquares: Set<number> = new Set();
+  selectedSquares: number[] = [];
 
   toggleSquare(num: number) {
-    if (this.selectedSquares.has(num)) {
-      this.selectedSquares.delete(num);
+    const index = this.selectedSquares.indexOf(num);
+    if (index > -1) {
+      this.selectedSquares.splice(index, 1); // Remove from array
     } else {
-      this.selectedSquares.add(num);
+      this.selectedSquares.push(num); // Add to array
     }
-    this.selectionChanged.emit(this.selectedSquares.size);
+    this.selectionChanged.emit(this.selectedSquares); // Emit updated array
   }
 }
