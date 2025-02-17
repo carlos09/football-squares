@@ -1,6 +1,10 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SquarePickComponent } from '../dialog/square-pick/square-pick.component';
+import { Store } from '@ngrx/store';
+import { loadSelections } from '../store/selections/selections.actions';
+import { selectSelectedSquareIds } from '../store/selections/selections.selectors';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-game-grid',
