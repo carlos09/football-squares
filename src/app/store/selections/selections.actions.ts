@@ -7,7 +7,7 @@ export const loadSelections = createAction(
 
 export const loadSelectionsSuccess = createAction(
   '[Selections] Load Selections Success',
-  props<{ selections: number[] }>() // Store only square_ids
+  props<{ selections: number[] }>()
 );
 
 export const loadSelectionsFailure = createAction(

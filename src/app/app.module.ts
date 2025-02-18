@@ -17,9 +17,7 @@ import { ConfrimDialogComponent } from './dialog/confrim-dialog/confrim-dialog.c
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { appReducer } from './store/app.state';
-import { SelectionsEffects } from './store/selections/selections.effects';
-import { StartGameEffects } from './store/start-game/start-game.effects';
+import { appEffects, appReducer } from './store/app.state';
 import { environment } from '../environments/environment';
 
 @NgModule({
@@ -38,19 +36,13 @@ import { environment } from '../environments/environment';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    FormsModule,
-    StoreDevtoolsModule.instrument({
-      maxAge: 25, // Keeps last 25 states
-      logOnly: environment.production // Restricts debugging in production
-    }),
+    FormsModule,    
     StoreModule.forRoot(appReducer),
-    EffectsModule.forRoot([SelectionsEffects, StartGameEffects]),    
-    // SelectionsModule,
-    // StartGameModule,
-    // StoreDevtoolsModule.instrument({
-    //   maxAge: 25, // Keeps last 25 states
-    //   logOnly: environment.production // Restricts debugging in production
-    // })
+    EffectsModule.forRoot(appEffects),
+    StoreDevtoolsModule.instrument({
+      maxAge: 25,
+      logOnly: environment.production
+    }),
   ],
   providers: [
     provideAnimationsAsync()

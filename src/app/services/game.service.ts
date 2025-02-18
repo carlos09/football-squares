@@ -33,8 +33,7 @@ export class GameService {
   }
 
   getUserById(userId: string) {
-    console.log('userId: ', userId);
-    return this.http.get<{ username: string }>(`/api/users/${userId}`);
+    return this.http.get<{ username: string }>(`${this.baseUrl}/api/users/${userId}`);
   }
 
   postSquareSelections(gameId: string, userId: string, selectedSquares: number[]): Observable<any> {
@@ -42,6 +41,7 @@ export class GameService {
   }
 
   getUserSelections(userId: string): Observable<any> {
+    console.log('user userID to get squres: ', userId);
     return this.http.get(`${this.baseUrl}/api/selections/${userId}`);
   }
   

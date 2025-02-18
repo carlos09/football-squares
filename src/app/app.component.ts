@@ -5,9 +5,13 @@ import { CreateUserDialogComponent } from './dialog/create-user-dialog/create-us
 import { ConfrimDialogComponent } from './dialog/confrim-dialog/confrim-dialog.component';
 import { Store } from '@ngrx/store';
 import { fetchUser, setGameIdCred, setUserIdCred } from './store/start-game/start-game.actions';
-import { selectUserId } from './store/start-game/start-game.seletors';
+import { selectUserId, selectUserInfo } from './store/start-game/start-game.seletors';
 import { loadSelections } from './store/selections/selections.actions';
 import { AppState } from './store/app.state';
+import { environment } from 'src/environments/environment';
+import { Observable, Observer, Operator, Subscription } from 'rxjs';
+import { UserInfo } from './models/userinfo.model';
+import { selectSelectedSquareIds } from './store/selections/selections.selectors';
 
 @Component({
   selector: 'app-root',
@@ -17,17 +21,17 @@ import { AppState } from './store/app.state';
 })
 export class AppComponent implements OnInit {
   title = 'football-squares';
-  selectedSquares: number[] = [];
+  selectedSquares$!: Observable<number[]>;
   gameId: string = '';
   username: string = '';
   userId: string = '';
+  userInfo$!: Observable<UserInfo>;
+
 
   constructor(
     private gameService: GameService,
     private dialog: MatDialog,
-    private _store: Store<AppState>) {
-      (window as any).store = this._store; 
-    }
+    private _store: Store<AppState>) {}
 
   ngOnInit() {
     let userId = localStorage.getItem('userId');
@@ -41,22 +45,21 @@ export class AppComponent implements OnInit {
       if (!userId) {
         this.openCreateUserDialog(this.gameId);
       } else {
-        console.log('local storage userId: ', userId);
+        // console.log('local storage userId: ', userId);
         // this._store.dispatch(setUserIdCred({ userId}));
-        this.fetchUsername(userId);
-        this.fetchSelections(userId);
+        this.fetchGameDataByUserId(userId);
       }
     }
 
     this._store.select(selectUserId).subscribe((userId) => {
-      console.log('---- userid: ', userId);
       this.userId = userId;
-    })
+    });
+    this.userInfo$ = this._store.select(selectUserInfo);
+    this.selectedSquares$ = this._store.select(selectSelectedSquareIds);
   }
 
   createNewGameAndPromptUser() {
     this.gameService.createGame().subscribe(response => {
-      console.log('response: ', response);
       this.gameId = response.gameId;
       localStorage.setItem('gameId', this.gameId);
 
@@ -64,8 +67,6 @@ export class AppComponent implements OnInit {
       if (response.url_id) {
         localStorage.setItem('urlId', response.url_id); // Save URL ID
       }
-  
-      console.log('Game Created:', response);
       
       this.openCreateUserDialog(this.gameId);
     });
@@ -75,7 +76,6 @@ export class AppComponent implements OnInit {
   createNewGame() {
     this.gameService.createGame().subscribe(response => {
       this.gameId = response.gameId;
-      console.log('Game Created:', response);
     });
   }
   
@@ -87,7 +87,7 @@ export class AppComponent implements OnInit {
 
   updateSelectedCount(squares: number[]) {
     console.log('selected squares: ', squares);
-    this.selectedSquares = squares;
+    // this.selectedSquares = squares;
   }
 
   openCreateUserDialog(gameId: string) {
@@ -112,7 +112,7 @@ export class AppComponent implements OnInit {
     const dialogRef = this.dialog.open(ConfrimDialogComponent, {
       data: {
         title: 'Confirm Selection',
-        message: `You have selected ${this.selectedSquares.length} squares. Do you want to save?`
+        message: `You have selected squares. Do you want to save?`
       }
     });
   
@@ -127,41 +127,19 @@ export class AppComponent implements OnInit {
     const gameId = localStorage.getItem('gameId');
     const userId = localStorage.getItem('userId');
 
-    if (gameId && userId) {
-      this.gameService.postSquareSelections(gameId, userId, Array.from(this.selectedSquares))
-        .subscribe(response => {
-          console.log('Selection saved successfully:', response);
-        }, error => {
-          console.error('Error saving selection:', error);
-        });
-    } else {
-      console.error('Missing gameId or userId');
-    }
+    // if (gameId && userId) {
+    //   this.gameService.postSquareSelections(gameId, userId, Array.from(this.selectedSquares))
+    //     .subscribe(response => {
+    //       console.log('Selection saved successfully:', response);
+    //     }, error => {
+    //       console.error('Error saving selection:', error);
+    //     });
+    // } else {
+    //   console.error('Missing gameId or userId');
+    // }
 }
 
-  fetchUsername(userId: string) {
+  fetchGameDataByUserId(userId: string) {
     this._store.dispatch(fetchUser({ userId }));
-    console.log('Dispatched fetchUser:', userId);
-    // this.gameService.getUserById(userId).subscribe(response => {
-    //   if (response && response.username) {
-    //     this.username = response.username;
-    //     console.log('Username retrieved:', this.username);
-    //   }
-    // }, error => {
-    //   console.error('Error fetching username:', error);
-    // });
-  }
-
-  fetchSelections(userId: string) {
-    this._store.dispatch(loadSelections({ userId }));
-    // this.gameService.getUserSelections(userId).subscribe(response => {
-    //   if (response) {
-    //     // this.username = response.username;
-    //     console.log('selections saved:', response);
-    //   }
-    // }, error => {
-    //   console.error('Error fetching selections:', error);
-    // });
-  }
-  
+  }  
 }

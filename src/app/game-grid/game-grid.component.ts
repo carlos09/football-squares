@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SquarePickComponent } from '../dialog/square-pick/square-pick.component';
 import { Store } from '@ngrx/store';
@@ -13,10 +13,11 @@ import { Observable } from 'rxjs';
   styleUrl: './game-grid.component.scss'
 })
 export class GameGridComponent {
+  @Input() selectedSquares: number[] = [];
   @Output() selectionChanged = new EventEmitter<number[]>();
 
   numbers = Array.from({ length: 100 }, (_, i) => i + 1);
-  selectedSquares: number[] = [];
+  // selectedSquares: number[] = [];
 
   toggleSquare(num: number) {
     const index = this.selectedSquares.indexOf(num);
@@ -26,5 +27,10 @@ export class GameGridComponent {
       this.selectedSquares.push(num); // Add to array
     }
     this.selectionChanged.emit(this.selectedSquares); // Emit updated array
+  }
+
+  updateSelection(squareIds: number[]) {
+    this.selectedSquares = squareIds;
+    this.selectionChanged.emit(squareIds);
   }
 }

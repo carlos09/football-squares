@@ -155,6 +155,7 @@
     });
 
     app.get("/api/users/:userId", async (req, res) => {
+        console.log('IN HERE with: ', userId);
         try {
             const { userId } = req.params;
             const result = await pool.query(

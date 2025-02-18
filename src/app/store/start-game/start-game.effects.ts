@@ -11,7 +11,8 @@ export class StartGameEffects {
       ofType(StartGameActions.fetchUser),
       switchMap(({ userId }) => 
         this.gameService.getUserById(userId).pipe(
-          map(response => StartGameActions.fetchUserSuccess({ username: response.username })),
+          map(response => StartGameActions.fetchUserSuccess({ userId,  // Include userId from the action
+            username: response.username  })),
           catchError(error => of(StartGameActions.fetchUserFailure({ error })))
         )
       )

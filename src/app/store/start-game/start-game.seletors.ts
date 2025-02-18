@@ -20,8 +20,12 @@ export const selectSelectionsError = createSelector(
 );
 
 export const selectUserId = createSelector(
-    selectGameState,
-    (state) => {
-        console.log('selectGameState state: ', state.userId);
-        return state.userId}
-  );
+  selectGameState,
+  (state) => state.userinfo.userId
+);
+
+
+export const selectUserInfo = createSelector(
+  selectGameState,
+  (state) => state.userinfo
+);

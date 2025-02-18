@@ -31,7 +31,7 @@ export const fetchUser = createAction(
   
   export const fetchUserSuccess = createAction(
     '[Fetch User API] Fetch User Success',
-    props<{ username: string }>()
+    props<{ userId: string; username: string }>()
   );
   
   export const fetchUserFailure = createAction(

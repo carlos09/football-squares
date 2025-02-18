@@ -1,11 +1,11 @@
 import { createReducer, on } from '@ngrx/store';
 import * as StartGameActions from './start-game.actions';
+import { UserInfo } from 'src/app/models/userinfo.model';
 
 export interface GameState {
   url_id: string;
   gameId: string;
-  userId: string;
-  username: string;
+  userinfo: UserInfo;
   loading: boolean;
   error: any;
 }
@@ -13,8 +13,10 @@ export interface GameState {
 export const initialState: GameState = {
   url_id: '',
   gameId: '',
-  userId: '',
-  username: '',
+  userinfo: {
+    userId: '',
+    username: ''
+  },
   loading: false,
   error: null
 };
@@ -37,18 +39,18 @@ export const StartGameReducer = createReducer(
     error,
     loading: false
   })),
-  on(StartGameActions.fetchUser, (state, actions) => {
-    console.log('*** Reducer: fetchUser action received with userId:', actions.userId);
-    return {
+  on(StartGameActions.fetchUser, (state, actions) => ({
       ...state,
       userId: actions.userId,
       loading: true,
       error: null
-    };
-  }),
+  })),
   on(StartGameActions.fetchUserSuccess, (state, data) => ({
     ...state,
-    username: data.username,
+    userinfo: {
+      userId: data.userId,
+      username: data.username
+    },
     loading: false
   })),
   on(StartGameActions.fetchUserFailure, (state, { error }) => ({
