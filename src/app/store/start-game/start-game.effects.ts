@@ -6,18 +6,43 @@ import * as StartGameActions from './start-game.actions';
 
 @Injectable()
 export class StartGameEffects {
-  fetchUser$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(StartGameActions.fetchUser),
-      switchMap(({ userId }) => 
-        this.gameService.getUserById(userId).pipe(
-          map(response => StartGameActions.fetchUserSuccess({ userId,  // Include userId from the action
-            username: response.username  })),
-          catchError(error => of(StartGameActions.fetchUserFailure({ error })))
-        )
-      )
-    )
-  );
+    fetchUser$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(StartGameActions.fetchUser),
+            switchMap(({ userId }) =>
+                this.gameService.getUserById(userId).pipe(
+                    map((response) =>
+                        StartGameActions.fetchUserSuccess({
+                            userId,
+                            username: response.username,
+                        }),
+                    ),
+                    catchError((error) =>
+                        of(StartGameActions.fetchUserFailure({ error })),
+                    ),
+                ),
+            ),
+        ),
+    );
 
-  constructor(private actions$: Actions, private gameService: GameService) {}
+    createGame$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(StartGameActions.createGame),
+            switchMap(() =>
+                this.gameService.createGame().pipe(
+                    map((res) =>
+                        StartGameActions.createGameSuccess({
+                            gameId: res.gameId,
+                            url_id: res.url_id,
+                        }),
+                    ),
+                    catchError((error) =>
+                        of(StartGameActions.createGameFailure({ error })),
+                    ),
+                ),
+            ),
+        ),
+    );
+
+    constructor(private actions$: Actions, private gameService: GameService) {}
 }
