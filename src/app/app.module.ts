@@ -19,34 +19,34 @@ import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { appEffects, appReducer } from './store/app.state';
 import { environment } from '../environments/environment';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    GameGridComponent,
-    SquarePickComponent,
-    CreateUserDialogComponent,
-    ConfrimDialogComponent 
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    FormsModule,    
-    StoreModule.forRoot(appReducer),
-    EffectsModule.forRoot(appEffects),
-    StoreDevtoolsModule.instrument({
-      maxAge: 25,
-      logOnly: environment.production
-    }),
-  ],
-  providers: [
-    provideAnimationsAsync()
-  ],
-  bootstrap: [AppComponent]
+    declarations: [
+        AppComponent,
+        GameGridComponent,
+        SquarePickComponent,
+        CreateUserDialogComponent,
+        ConfrimDialogComponent,
+    ],
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        HttpClientModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        FormsModule,
+        MatSnackBarModule,
+        StoreModule.forRoot(appReducer),
+        EffectsModule.forRoot(appEffects),
+        StoreDevtoolsModule.instrument({
+            maxAge: 25,
+            logOnly: environment.production,
+        }),
+    ],
+    providers: [provideAnimationsAsync()],
+    bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

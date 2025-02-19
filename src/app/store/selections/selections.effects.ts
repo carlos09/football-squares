@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, mergeMap, of, withLatestFrom } from 'rxjs';
+import { catchError, map, mergeMap, of, tap, withLatestFrom } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as SelectionsActions from './selections.actions';
-import * as StartGameActions from '../start-game/start-game.actions';
 import { SquareSelection } from '../../models/square-selection.model';
 import { Store } from '@ngrx/store';
 import { selectGameId, selectUserId } from '../start-game/start-game.seletors';
+import { showSnackbar } from '../shared/shared.actions';
 
 @Injectable()
 export class SelectionsEffects {
@@ -33,7 +33,6 @@ export class SelectionsEffects {
             ),
         ),
     );
-
     saveSquaresSelections$ = createEffect(() =>
         this.actions$.pipe(
             ofType(SelectionsActions.saveSelectedSquares),
@@ -59,10 +58,22 @@ export class SelectionsEffects {
                                 { userId },
                             );
                         }),
+                        tap(() => {
+                            this._store.dispatch(
+                                showSnackbar({
+                                    message: 'Selections saved successfully!',
+                                    duration: 3000,
+                                }),
+                            );
+                        }),
                         catchError((error) =>
                             of(
                                 SelectionsActions.saveSelectedSquaresFailure({
                                     error,
+                                }),
+                                showSnackbar({
+                                    message: 'Failed to save selections',
+                                    duration: 3000,
                                 }),
                             ),
                         ),

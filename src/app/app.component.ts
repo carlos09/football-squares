@@ -1,15 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameService } from './services/game.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateUserDialogComponent } from './dialog/create-user-dialog/create-user-dialog.component';
 import { ConfrimDialogComponent } from './dialog/confrim-dialog/confrim-dialog.component';
-import { Store } from '@ngrx/store';
-import {
-    createGame,
-    fetchUser,
-    setGameIdCred,
-    setUserIdCred,
-} from './store/start-game/start-game.actions';
+import { Store, select } from '@ngrx/store';
+import { createGame, fetchUser } from './store/start-game/start-game.actions';
 import {
     selectGameId,
     selectUserId,
@@ -20,85 +15,106 @@ import {
     saveSelectedSquares,
 } from './store/selections/selections.actions';
 import { AppState } from './store/app.state';
-import { environment } from 'src/environments/environment';
 import {
-    map,
     Observable,
-    Observer,
     of,
-    Operator,
-    Subscription,
-    switchMap,
+    combineLatest,
     take,
+    switchMap,
+    map,
+    Subscription,
 } from 'rxjs';
 import { UserInfo } from './models/userinfo.model';
 import { selectSelectedSquareIds } from './store/selections/selections.selectors';
 
 @Component({
     selector: 'app-root',
-    templateUrl: './app.component.html',
     standalone: false,
+    templateUrl: './app.component.html',
     styleUrl: './app.component.scss',
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
     title = 'football-squares';
     selectedSquares$!: Observable<number[]>;
     gameId: string = '';
     username: string = '';
     userId: string = '';
     userInfo$!: Observable<UserInfo>;
+    private subscriptions = new Set<Subscription>();
 
     constructor(
         private gameService: GameService,
         private dialog: MatDialog,
-        private _store: Store<AppState>,
+        private store: Store<AppState>,
     ) {}
 
     ngOnInit() {
-        let userId = localStorage.getItem('userId');
-        let gameId = localStorage.getItem('gameId');
+        this.initializeGame();
 
-        if (!gameId) {
+        // Combine observables to avoid multiple subscriptions
+        const gameId$ = this.store.pipe(select(selectGameId));
+        const userId$ = this.store.pipe(select(selectUserId));
+
+        this.subscriptions.add(
+            combineLatest([gameId$, userId$]).subscribe(([gameId, userId]) => {
+                this.gameId = gameId;
+                this.userId = userId;
+
+                if (gameId) {
+                    localStorage.setItem('gameId', gameId);
+                }
+                if (userId) {
+                    this.loadSelections();
+                }
+            }),
+        );
+
+        this.userInfo$ = this.store.pipe(select(selectUserInfo));
+        this.selectedSquares$ = this.store.pipe(
+            select(selectSelectedSquareIds),
+        );
+    }
+
+    ngOnDestroy() {
+        // Unsubscribe to prevent memory leaks
+        this.subscriptions.forEach((sub) => sub.unsubscribe());
+    }
+
+    initializeGame() {
+        const storedUserId = localStorage.getItem('userId');
+        const storedGameId = localStorage.getItem('gameId');
+
+        if (!storedGameId) {
             this.createNewGameAndPromptUser();
         } else {
-            this.gameId = gameId;
-            if (!userId) {
+            this.gameId = storedGameId;
+            if (!storedUserId) {
                 this.openCreateUserDialog(this.gameId);
             } else {
-                this.fetchGameDataByUserId(userId, gameId);
+                this.fetchGameDataByUserId(storedUserId, this.gameId);
             }
         }
-        this._store.select(selectGameId).subscribe((gameId) => {
-            this.gameId = gameId;
-            if (this.gameId) {
-                localStorage.setItem('gameId', this.gameId);
-            }
-        });
-        this._store.select(selectUserId).subscribe((userId) => {
-            this.userId = userId;
-            this.loadSelections();
-        });
-        this.userInfo$ = this._store.select(selectUserInfo);
-        this.selectedSquares$ = this._store.select(selectSelectedSquareIds);
     }
 
     loadSelections() {
         if (this.userId && this.gameId) {
-            this._store.dispatch(loadSelections({ userId: this.userId }));
+            this.store.dispatch(loadSelections({ userId: this.userId }));
         }
     }
 
     createNewGameAndPromptUser() {
-        this._store.dispatch(createGame());
+        this.store.dispatch(createGame());
     }
 
     joinGame() {
         console.log('joinGame()');
-        this.gameService
-            .joinGame(this.gameId, this.username)
-            .subscribe((response) => {
-                console.log('Joined Game:', response);
-            });
+        this.subscriptions.add(
+            this.gameService
+                .joinGame(this.gameId, this.username)
+                .subscribe((response) => {
+                    console.log('Joined Game:', response);
+                }),
+        );
     }
 
     updateSelectedCount(squares: number[]) {
@@ -112,47 +128,54 @@ export class AppComponent implements OnInit {
             data: { gameId },
         });
 
-        dialogRef.afterClosed().subscribe((result) => {
-            if (result) {
-                localStorage.setItem('userId', result.user_id);
-                this.username = result.username;
-            }
-        });
+        this.subscriptions.add(
+            dialogRef.afterClosed().subscribe((result) => {
+                if (result) {
+                    localStorage.setItem('userId', result.user_id);
+                    this.username = result.username;
+                }
+            }),
+        );
     }
 
     finishSelection() {
-        this.selectedSquares$
-            .pipe(
-                take(1),
-                switchMap((selectedSquares) => {
-                    const squaresCount = selectedSquares.length;
+        this.subscriptions.add(
+            this.selectedSquares$
+                .pipe(
+                    take(1),
+                    switchMap((selectedSquares) => {
+                        const squaresCount = selectedSquares.length;
 
-                    const dialogRef = this.dialog.open(ConfrimDialogComponent, {
-                        data: {
-                            title: 'Confirm Selection',
-                            message: `You have selected ${squaresCount} squares. Do you want to save?`,
-                        },
-                    });
+                        const dialogRef = this.dialog.open(
+                            ConfrimDialogComponent,
+                            {
+                                data: {
+                                    title: 'Confirm Selection',
+                                    message: `You have selected ${squaresCount} squares. Do you want to save?`,
+                                },
+                            },
+                        );
 
-                    return dialogRef.afterClosed().pipe(
-                        take(1), // Ensure we only take the first response and complete
-                        map((confirmed) => ({
-                            confirmed,
-                            selectedSquareIds: selectedSquares,
-                        })),
-                    );
+                        return dialogRef.afterClosed().pipe(
+                            take(1),
+                            map((confirmed) => ({
+                                confirmed,
+                                selectedSquareIds: selectedSquares,
+                            })),
+                        );
+                    }),
+                )
+                .subscribe(({ confirmed, selectedSquareIds }) => {
+                    if (confirmed) {
+                        this.store.dispatch(
+                            saveSelectedSquares({ selectedSquareIds }),
+                        );
+                    }
                 }),
-            )
-            .subscribe(({ confirmed, selectedSquareIds }) => {
-                if (confirmed) {
-                    this._store.dispatch(
-                        saveSelectedSquares({ selectedSquareIds }),
-                    );
-                }
-            });
+        );
     }
 
     fetchGameDataByUserId(userId: string, gameId: string) {
-        this._store.dispatch(fetchUser({ userId, gameId }));
+        this.store.dispatch(fetchUser({ userId, gameId }));
     }
 }
