@@ -1,11 +1,10 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { GameState } from './start-game.reducer';
+import { GameState } from './game.reducer';
 
-export const START_GAME_STATE_NAME = 'start-game';
+export const GAME_STATE_NAME = 'game';
 
-export const selectGameState = createFeatureSelector<GameState>(
-    START_GAME_STATE_NAME,
-);
+export const selectGameState =
+    createFeatureSelector<GameState>(GAME_STATE_NAME);
 
 // export const selectGameCode = createSelector(
 //     selectGameState,
@@ -17,7 +16,7 @@ export const selectGameId = createSelector(
     (state) => state.games.map((game) => game.gameId), // Adjusted for multiple games
 );
 
-export const selectStartGameLoading = createSelector(
+export const selectGameLoading = createSelector(
     selectGameState,
     (state) => state.loading,
 );

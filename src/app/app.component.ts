@@ -4,12 +4,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { CreateUserDialogComponent } from './dialog/create-user-dialog/create-user-dialog.component';
 import { ConfrimDialogComponent } from './dialog/confrim-dialog/confrim-dialog.component';
 import { Store, select } from '@ngrx/store';
-import { createGame } from './store/start-game/start-game.actions';
+import { createGame } from './store/game/game.actions';
 import {
     selectGameId,
     // selectUserId,
     // selectUserInfo,
-} from './store/start-game/start-game.seletors';
+} from './store/game/game.seletors';
 import {
     loadSelections,
     saveSelectedSquares,

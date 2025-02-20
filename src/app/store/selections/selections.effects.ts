@@ -5,7 +5,7 @@ import { GameService } from '../../services/game.service';
 import * as SelectionsActions from './selections.actions';
 import { SquareSelection } from '../../models/square-selection.model';
 import { Store } from '@ngrx/store';
-import { selectGameId } from '../start-game/start-game.seletors';
+import { selectGameId } from '../game/game.seletors';
 import { showSnackbar } from '../shared/shared.actions';
 import { selectUserId } from '../user/user.selectors';
 

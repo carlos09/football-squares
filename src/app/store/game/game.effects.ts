@@ -2,22 +2,22 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, switchMap, of, mergeMap } from 'rxjs';
 import { GameService } from '../../services/game.service';
-import * as StartGameActions from './start-game.actions';
+import * as GameActions from './game.actions';
 
 @Injectable()
-export class StartGameEffects {
+export class GameEffects {
     getGameCode$ = createEffect(() =>
         this.actions$.pipe(
-            ofType(StartGameActions.generateGameCode),
+            ofType(GameActions.generateGameCode),
             switchMap(() =>
                 this.gameService.createGameCode().pipe(
                     map((res) =>
-                        StartGameActions.generateGameCodeSuccess({
+                        GameActions.generateGameCodeSuccess({
                             gameCode: res.gameCode,
                         }),
                     ),
                     catchError((error) =>
-                        of(StartGameActions.generateGameCodeFailure({ error })),
+                        of(GameActions.generateGameCodeFailure({ error })),
                     ),
                 ),
             ),
@@ -26,17 +26,17 @@ export class StartGameEffects {
 
     createGame$ = createEffect(() =>
         this.actions$.pipe(
-            ofType(StartGameActions.createGame),
+            ofType(GameActions.createGame),
             switchMap(({ userId }) =>
                 this.gameService.createGame(userId).pipe(
                     map(
                         (game) =>
-                            StartGameActions.createGameSuccess({
+                            GameActions.createGameSuccess({
                                 game,
                             }), // Fix variable reference
                     ),
                     catchError((error) =>
-                        of(StartGameActions.createGameFailure({ error })),
+                        of(GameActions.createGameFailure({ error })),
                     ),
                 ),
             ),
@@ -45,15 +45,15 @@ export class StartGameEffects {
 
     fetchUserGames$ = createEffect(() =>
         this.actions$.pipe(
-            ofType(StartGameActions.fetchUserGames),
+            ofType(GameActions.fetchUserGames),
             mergeMap(({ userId }) =>
                 this.gameService.getUserGames(userId).pipe(
                     map((games) =>
-                        StartGameActions.fetchUserGamesSuccess({ games }),
+                        GameActions.fetchUserGamesSuccess({ games }),
                     ),
                     catchError((error) =>
                         of(
-                            StartGameActions.fetchUserGamesFailure({
+                            GameActions.fetchUserGamesFailure({
                                 error:
                                     error?.error?.message ||
                                     'Failed to fetch user games',

@@ -1,5 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import * as StartGameActions from './start-game.actions';
+import * as GameActions from './game.actions';
 import { UserInfo } from 'src/app/models/userinfo.model';
 
 export interface GameState {
@@ -14,47 +14,47 @@ export const initialState: GameState = {
     error: null,
 };
 
-export const startGameReducer = createReducer(
+export const gameReducer = createReducer(
     initialState,
-    on(StartGameActions.generateGameCode, (state) => ({
+    on(GameActions.generateGameCode, (state) => ({
         ...state,
         loading: true,
         error: null,
     })),
-    on(StartGameActions.generateGameCodeSuccess, (state, data) => ({
+    on(GameActions.generateGameCodeSuccess, (state, data) => ({
         ...state,
         gameCode: data.gameCode,
         loading: true,
         error: null,
     })),
-    on(StartGameActions.createGame, (state) => ({
+    on(GameActions.createGame, (state) => ({
         ...state,
         loading: true,
         error: null,
     })),
-    on(StartGameActions.createGameSuccess, (state, { game }) => ({
+    on(GameActions.createGameSuccess, (state, { game }) => ({
         ...state,
         games: [...state.games, game],
         loading: false,
     })),
-    on(StartGameActions.createGameFailure, (state, { error }) => ({
+    on(GameActions.createGameFailure, (state, { error }) => ({
         ...state,
         error,
         loading: false,
     })),
-    on(StartGameActions.fetchUserGames, (state) => ({
+    on(GameActions.fetchUserGames, (state) => ({
         ...state,
         loading: true,
     })),
 
-    on(StartGameActions.fetchUserGamesSuccess, (state, { games }) => ({
+    on(GameActions.fetchUserGamesSuccess, (state, { games }) => ({
         ...state,
         games,
         loading: false,
         error: null,
     })),
 
-    on(StartGameActions.fetchUserGamesFailure, (state, { error }) => ({
+    on(GameActions.fetchUserGamesFailure, (state, { error }) => ({
         ...state,
         loading: false,
         error,

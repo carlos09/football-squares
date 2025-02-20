@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import * as startGameActions from '../store/start-game/start-game.actions';
+import * as startGameActions from '../store/game/game.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store/app.state';
 import { filter, Observable, take } from 'rxjs';
-import { selectGameUrl } from '../store/start-game/start-game.seletors';
+import { selectGameUrl } from '../store/game/game.seletors';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import * as userActions from '../store/user/user.actions';
