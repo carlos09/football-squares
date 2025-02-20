@@ -5,7 +5,7 @@ import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-u
 import { ConfrimDialogComponent } from '../dialog/confrim-dialog/confrim-dialog.component';
 import { Store, select } from '@ngrx/store';
 // import { createGame, fetchUser } from '../store/start-game/start-game.actions';
-import { selectGameId } from '../store/start-game/start-game.seletors';
+import { selectGameId } from '../store/game/game.seletors';
 import {
     loadSelections,
     saveSelectedSquares,
