@@ -5,8 +5,9 @@ import { GameService } from '../../services/game.service';
 import * as SelectionsActions from './selections.actions';
 import { SquareSelection } from '../../models/square-selection.model';
 import { Store } from '@ngrx/store';
-import { selectGameId, selectUserId } from '../start-game/start-game.seletors';
+import { selectGameId } from '../start-game/start-game.seletors';
 import { showSnackbar } from '../shared/shared.actions';
+import { selectUserId } from '../user/user.selectors';
 
 @Injectable()
 export class SelectionsEffects {
@@ -33,54 +34,54 @@ export class SelectionsEffects {
             ),
         ),
     );
-    saveSquaresSelections$ = createEffect(() =>
-        this.actions$.pipe(
-            ofType(SelectionsActions.saveSelectedSquares),
-            withLatestFrom(
-                this._store.select(selectGameId),
-                this._store.select(selectUserId),
-            ),
-            mergeMap(([{ selectedSquareIds }, gameId, userId]) => {
-                if (!gameId || !userId) {
-                    return of(
-                        SelectionsActions.loadSelectionsFailure({
-                            error: 'Missing gameId or userId',
-                        }),
-                    );
-                }
+    // saveSquaresSelections$ = createEffect(() =>
+    //     this.actions$.pipe(
+    //         ofType(SelectionsActions.saveSelectedSquares),
+    //         withLatestFrom(
+    //             this._store.select(selectGameId),
+    //             this._store.select(selectUserId),
+    //         ),
+    //         mergeMap(([{ selectedSquareIds }, gameId, userId]) => {
+    //             if (!gameId || !userId) {
+    //                 return of(
+    //                     SelectionsActions.loadSelectionsFailure({
+    //                         error: 'Missing gameId or userId',
+    //                     }),
+    //                 );
+    //             }
 
-                return this.gameService
-                    .saveSquareSelections(gameId, userId, selectedSquareIds)
-                    .pipe(
-                        map(() => {
-                            console.log('Selections saved successfully');
-                            return SelectionsActions.saveSelectedSquaresSuccess(
-                                { userId },
-                            );
-                        }),
-                        tap(() => {
-                            this._store.dispatch(
-                                showSnackbar({
-                                    message: 'Selections saved successfully!',
-                                    duration: 3000,
-                                }),
-                            );
-                        }),
-                        catchError((error) =>
-                            of(
-                                SelectionsActions.saveSelectedSquaresFailure({
-                                    error,
-                                }),
-                                showSnackbar({
-                                    message: 'Failed to save selections',
-                                    duration: 3000,
-                                }),
-                            ),
-                        ),
-                    );
-            }),
-        ),
-    );
+    //             return this.gameService
+    //                 .saveSquareSelections(gameId, userId, selectedSquareIds)
+    //                 .pipe(
+    //                     map(() => {
+    //                         console.log('Selections saved successfully');
+    //                         return SelectionsActions.saveSelectedSquaresSuccess(
+    //                             { userId },
+    //                         );
+    //                     }),
+    //                     tap(() => {
+    //                         this._store.dispatch(
+    //                             showSnackbar({
+    //                                 message: 'Selections saved successfully!',
+    //                                 duration: 3000,
+    //                             }),
+    //                         );
+    //                     }),
+    //                     catchError((error) =>
+    //                         of(
+    //                             SelectionsActions.saveSelectedSquaresFailure({
+    //                                 error,
+    //                             }),
+    //                             showSnackbar({
+    //                                 message: 'Failed to save selections',
+    //                                 duration: 3000,
+    //                             }),
+    //                         ),
+    //                     ),
+    //                 );
+    //         }),
+    //     ),
+    // );
 
     constructor(
         private actions$: Actions,

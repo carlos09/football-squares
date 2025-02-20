@@ -3,35 +3,38 @@ import * as StartGameActions from './start-game.actions';
 import { UserInfo } from 'src/app/models/userinfo.model';
 
 export interface GameState {
-    url_id: string;
-    gameId: string;
-    userinfo: UserInfo;
+    games: { gameId: string; gameCode: string; role: string }[];
     loading: boolean;
     error: any;
 }
 
 export const initialState: GameState = {
-    url_id: '',
-    gameId: '',
-    userinfo: {
-        userId: '',
-        username: '',
-    },
+    games: [],
     loading: false,
     error: null,
 };
 
-export const StartGameReducer = createReducer(
+export const startGameReducer = createReducer(
     initialState,
+    on(StartGameActions.generateGameCode, (state) => ({
+        ...state,
+        loading: true,
+        error: null,
+    })),
+    on(StartGameActions.generateGameCodeSuccess, (state, data) => ({
+        ...state,
+        gameCode: data.gameCode,
+        loading: true,
+        error: null,
+    })),
     on(StartGameActions.createGame, (state) => ({
         ...state,
         loading: true,
         error: null,
     })),
-    on(StartGameActions.createGameSuccess, (state, data) => ({
+    on(StartGameActions.createGameSuccess, (state, { game }) => ({
         ...state,
-        gameId: data.gameId,
-        url_id: data.url_id,
+        games: [...state.games, game],
         loading: false,
     })),
     on(StartGameActions.createGameFailure, (state, { error }) => ({
@@ -39,24 +42,21 @@ export const StartGameReducer = createReducer(
         error,
         loading: false,
     })),
-    on(StartGameActions.fetchUser, (state, actions) => ({
+    on(StartGameActions.fetchUserGames, (state) => ({
         ...state,
-        userId: actions.userId,
-        gameId: actions.gameId,
         loading: true,
+    })),
+
+    on(StartGameActions.fetchUserGamesSuccess, (state, { games }) => ({
+        ...state,
+        games,
+        loading: false,
         error: null,
     })),
-    on(StartGameActions.fetchUserSuccess, (state, data) => ({
+
+    on(StartGameActions.fetchUserGamesFailure, (state, { error }) => ({
         ...state,
-        userinfo: {
-            userId: data.userId,
-            username: data.username,
-        },
         loading: false,
-    })),
-    on(StartGameActions.fetchUserFailure, (state, { error }) => ({
-        ...state,
         error,
-        loading: false,
     })),
 );

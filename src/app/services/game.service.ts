@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { GameCode } from '../models/game-code.model';
+import { User } from '../models/userinfo.model';
 
 @Injectable({
     providedIn: 'root',
@@ -10,25 +12,42 @@ export class GameService {
 
     constructor(private http: HttpClient) {}
 
-    createGame() {
-        console.log('create game service');
-        const url_id = crypto.randomUUID();
-        return this.http.post<{ gameId: string; url_id: string }>(
-            `${this.baseUrl}/api/games`,
-            { url_id },
-        );
+    createGame(
+        userId: string,
+    ): Observable<{ gameId: string; gameCode: string; role: string }> {
+        return this.http.post<{
+            gameId: string;
+            gameCode: string;
+            role: string;
+        }>(`${this.baseUrl}/api/games/create`, { userId });
     }
 
     createUser(
-        gameId: string,
         username: string,
         password: string,
-    ): Observable<any> {
-        return this.http.post(`${this.baseUrl}/api/users`, {
-            gameId,
-            username,
-            password,
-        });
+    ): Observable<{ userId: string; username: string }> {
+        console.log('create user()');
+        return this.http.post<{ userId: string; username: string }>(
+            `${this.baseUrl}/api/users/create`,
+            {
+                username,
+                password,
+            },
+        );
+    }
+
+    getUserGames(
+        userId: string,
+    ): Observable<{ gameId: string; gameCode: string; role: string }[]> {
+        return this.http.get<
+            { gameId: string; gameCode: string; role: string }[]
+        >(`${this.baseUrl}/api/users/${userId}/games`);
+    }
+
+    getUser(userId: string): Observable<{ userId: string; username: string }> {
+        return this.http.get<{ userId: string; username: string }>(
+            `${this.baseUrl}/api/users/${userId}`,
+        );
     }
 
     getGame(gameId: string): Observable<any> {
@@ -43,8 +62,9 @@ export class GameService {
     }
 
     getUserById(userId: string) {
+        console.log('get user by id');
         return this.http.get<{ username: string }>(
-            `${this.baseUrl}/api/users/${userId}`,
+            `${this.baseUrl}/api/user/${userId}`,
         );
     }
 
@@ -63,5 +83,9 @@ export class GameService {
     getUserSelections(userId: string): Observable<any> {
         console.log('user userID to get squres: ', userId);
         return this.http.get(`${this.baseUrl}/api/selections/${userId}`);
+    }
+
+    createGameCode(): Observable<GameCode> {
+        return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {}); // Removed `}`
     }
 }

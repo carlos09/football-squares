@@ -20,6 +20,8 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { appEffects, appReducer } from './store/app.state';
 import { environment } from '../environments/environment';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { GameComponent } from './game/game.component';
+import { LandingComponent } from './landing/landing.component';
 
 @NgModule({
     declarations: [
@@ -28,6 +30,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
         SquarePickComponent,
         CreateUserDialogComponent,
         ConfrimDialogComponent,
+        GameComponent,
+        LandingComponent,
     ],
     imports: [
         BrowserModule,
