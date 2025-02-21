@@ -8,6 +8,8 @@ import { selectGameUrl } from '../store/game/game.seletors';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import * as userActions from '../store/user/user.actions';
+import { Game } from '../models/game.model';
+import { selectUserGames } from '../store/user/user.selectors';
 
 @Component({
     selector: 'app-landing',
@@ -18,6 +20,7 @@ import * as userActions from '../store/user/user.actions';
 export class LandingComponent implements OnInit {
     gameCode$!: Observable<string>;
     gameUrl$!: Observable<string>;
+    games$!: Observable<Game[]>;
     userId: string | null = null;
 
     constructor(
@@ -28,6 +31,7 @@ export class LandingComponent implements OnInit {
 
     ngOnInit(): void {
         this.gameUrl$ = this.store.select(selectGameUrl);
+        this.games$ = this.store.select(selectUserGames);
         this.userId = localStorage.getItem('userId');
 
         if (this.userId) {

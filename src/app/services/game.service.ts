@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, tap, throwError } from 'rxjs';
 import { GameCode } from '../models/game-code.model';
 import { User } from '../models/userinfo.model';
+import { Game } from '../models/game.model';
 
 @Injectable({
     providedIn: 'root',
@@ -26,13 +27,9 @@ export class GameService {
         username: string,
         password: string,
     ): Observable<{ userId: string; username: string }> {
-        console.log('create user()');
         return this.http.post<{ userId: string; username: string }>(
             `${this.baseUrl}/api/users/create`,
-            {
-                username,
-                password,
-            },
+            { username, password },
         );
     }
 
@@ -61,11 +58,22 @@ export class GameService {
         });
     }
 
-    getUserById(userId: string) {
-        console.log('get user by id');
-        return this.http.get<{ username: string }>(
-            `${this.baseUrl}/api/user/${userId}`,
-        );
+    getUserById(userId: string): Observable<{ user: User; games: Game[] }> {
+        return this.http
+            .get<{ user: User; games: Game[] }>(
+                `${this.baseUrl}/api/users/${userId}`,
+            )
+            .pipe(
+                catchError((error) => {
+                    console.error('Error fetching user:', error);
+                    return throwError(
+                        () =>
+                            new Error(
+                                error.error?.message || 'Error fetching user',
+                            ),
+                    );
+                }),
+            );
     }
 
     saveSquareSelections(

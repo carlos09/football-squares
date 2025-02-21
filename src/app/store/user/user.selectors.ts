@@ -21,15 +21,25 @@ export const selectCreateUserError = createSelector(
     (state) => state.error,
 );
 
-export const selectCreateUserSuccess = createSelector(
-    selectUserState,
-    (state) => state.createUserSuccess, // Ensure this property exists in UserState
-);
+// export const selectCreateUserSuccess = createSelector(
+//     selectUserState,
+//     (state) => state.createUserSuccess, // Ensure this property exists in UserState
+// );
 
 export const selectCreatedUser = createSelector(
     selectUserState,
-    (state) => {
-        console.log('in this selector', state);
-        return state.user;
-    }, // Returns the user object if available
+    (state) => state.user, // Ensure this returns the correct user object
+);
+
+export const selectUser = createSelector(
+    selectUserState,
+    (state) => state.user,
+);
+export const selectUserGames = createSelector(
+    selectUserState,
+    (state) => state.games,
+);
+export const selectUserLoading = createSelector(
+    selectUserState,
+    (state) => state.loading,
 );

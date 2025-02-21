@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, switchMap, of } from 'rxjs';
+import { catchError, map, switchMap, of, mergeMap } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as UserActions from './user.actions';
+import { User } from 'src/app/models/userinfo.model';
 
 @Injectable()
 export class UserEffects {
@@ -11,7 +12,17 @@ export class UserEffects {
             ofType(UserActions.createUser),
             switchMap(({ username, password }) =>
                 this.gameService.createUser(username, password).pipe(
-                    map((user) => UserActions.createUserSuccess({ user })),
+                    map((response) =>
+                        UserActions.createUserSuccess({
+                            user: {
+                                userId: response?.userId,
+                                username: response?.username,
+                                password: '', // Since the backend won't return it
+                                gameId: null,
+                                roleId: null,
+                            },
+                        }),
+                    ),
                     catchError((error) => {
                         const errorMessage =
                             error?.error?.message ||
@@ -30,26 +41,25 @@ export class UserEffects {
     fetchUser$ = createEffect(() =>
         this.actions$.pipe(
             ofType(UserActions.fetchUser),
-            switchMap(({ userId }) =>
-                this.gameService.getUser(userId).pipe(
-                    // Ensure this method exists
-                    map((user) =>
-                        UserActions.fetchUserSuccess({
-                            userId: user.userId,
-                            username: user.username,
-                        }),
-                    ),
+            mergeMap(({ userId }) => {
+                console.log('go fetch user!', userId);
+                return this.gameService.getUserById(userId).pipe(
+                    map((response) => {
+                        console.log('response::: ', response);
+                        return UserActions.fetchUserSuccess({
+                            user: response.user,
+                            games: response.games,
+                        });
+                    }),
                     catchError((error) =>
                         of(
                             UserActions.fetchUserFailure({
-                                error:
-                                    error?.error?.message ||
-                                    'Failed to fetch user',
+                                error: error.message,
                             }),
                         ),
                     ),
-                ),
-            ),
+                );
+            }),
         ),
     );
 

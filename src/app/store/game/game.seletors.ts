@@ -29,8 +29,3 @@ export const selectSelectionsError = createSelector(
 export const selectGameUrl = createSelector(selectGameState, (state) =>
     state.games.length > 0 ? state.games[0].gameCode : '',
 );
-
-export const selectUserGames = createSelector(
-    selectGameState,
-    (state) => state.games,
-);

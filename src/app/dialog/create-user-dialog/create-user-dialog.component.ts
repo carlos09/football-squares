@@ -4,7 +4,7 @@ import { GameService } from '../../services/game.service';
 import { Store } from '@ngrx/store';
 import * as userSelectors from 'src/app/store/user/user.selectors';
 import { createUser } from 'src/app/store/user/user.actions';
-import { filter, Subject, take, takeUntil } from 'rxjs';
+import { filter, Subject, take, takeUntil, tap } from 'rxjs';
 
 @Component({
     selector: 'app-create-user-dialog',
@@ -47,6 +47,7 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
         this.store
             .select(userSelectors.selectCreatedUser)
             .pipe(
+                tap((user) => console.log('User from store:', user)), // Debugging step
                 filter((user) => !!user),
                 take(1),
             )
