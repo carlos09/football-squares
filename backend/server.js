@@ -230,51 +230,77 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-app.get('/api/user/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const result = await pool.query(
-            'SELECT username FROM users WHERE user_id = $1',
-            [userId],
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        res.set('Server-Timing', `endpoint-name;desc="Get User"`);
-        res.setHeader('Content-Type', 'application/json'); // Ensure JSON response
-        res.json(result.rows[0]); // Send JSON response
-    } catch (err) {
-        res.status(500).json({ error: 'An error occurred' });
-    }
-});
-
 app.get('/api/users/:userId', async (req, res) => {
     const { userId } = req.params;
-    console.log(`Fetching user with userId: ${userId}`);
+    console.log(`Fetching user with userId users/userid: ${userId}`);
 
     try {
+        // Fetch user data
         const userResult = await pool.query(
             'SELECT * FROM users WHERE user_id = $1',
             [userId],
         );
 
-        if (userResult.rows.length === 0) {
+        if (!userResult.rows.length) {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Fetch games associated with the user
         const gamesResult = await pool.query(
             'SELECT * FROM games WHERE admin_user_id = $1 OR id IN (SELECT game_id FROM users WHERE user_id = $1)',
             [userId],
         );
 
-        res.json({
+        // Ensure JSON response and log for debugging
+        const response = {
             user: userResult.rows[0],
-            games: gamesResult.rows,
-        });
+            games: gamesResult.rows || [],
+        };
+
+        console.log('API Response:', JSON.stringify(response, null, 2));
+
+        res.setHeader('Content-Type', 'application/json');
+        res.json(response);
     } catch (err) {
         console.error('Error fetching user and games:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/users/:userId', async (req, res) => {
+    const { userId } = req.params;
+    console.log(`Fetching user with userId api/users/userid: ${userId}`);
+
+    try {
+        // Fetch user data
+        const userResult = await pool.query(
+            'SELECT * FROM users WHERE user_id = $1',
+            [userId],
+        );
+
+        if (!userResult.rows.length) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Fetch games associated with the user
+        const gamesResult = await pool.query(
+            'SELECT * FROM games WHERE admin_user_id = $1 OR id IN (SELECT game_id FROM users WHERE user_id = $1)',
+            [userId],
+        );
+
+        // Ensure JSON response and log for debugging
+        const response = {
+            user: userResult.rows[0],
+            games: gamesResult.rows || [],
+        };
+
+        console.log('API Response:', JSON.stringify(response, null, 2));
+
+        res.setHeader('Content-Type', 'application/json');
+        res.json(response);
+    } catch (err) {
+        console.error('Error fetching user and games:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
