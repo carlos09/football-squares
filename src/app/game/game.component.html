@@ -2,7 +2,7 @@
     <div
         class="bg-white shadow-lg rounded-lg p-6 min-w-[820px] max-w-4xl w-full"
     >
-        <h1>Username: {{ (userInfo$ | async)?.username }}</h1>
+        <h1>Username: {{ user }}</h1>
         <app-game-grid
             [selectedSquares]="(selectedSquares$ | async) ?? []"
             (selectionChanged)="updateSelectedCount($event)"

@@ -11,10 +11,10 @@ export const selectGameState =
 //     (state) => state.gameCode,
 // );
 
-export const selectGameId = createSelector(
-    selectGameState,
-    (state) => state.games.map((game) => game.gameId), // Adjusted for multiple games
-);
+// export const selectGameId = createSelector(
+//     selectGameState,
+//     (state) => state.games.map((game) => game.gameId), // Adjusted for multiple games
+// );
 
 export const selectGameLoading = createSelector(
     selectGameState,

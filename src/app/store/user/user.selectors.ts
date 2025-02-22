@@ -35,11 +35,33 @@ export const selectUser = createSelector(
     selectUserState,
     (state) => state.user,
 );
-export const selectUserGames = createSelector(
-    selectUserState,
-    (state) => state.games,
-);
+export const selectUserGames = createSelector(selectUserState, (state) => {
+    console.log('Full user state:', state); // Log the entire state object
+    return state?.games ?? []; // Ensure it never returns undefined
+});
+
 export const selectUserLoading = createSelector(
     selectUserState,
     (state) => state.loading,
 );
+
+export const selectUserStateFull = createSelector(selectUserState, (state) => ({
+    user: state.user,
+    games: state.games,
+}));
+
+export const selectUserAndCurrentGame = (gameCode: string | null) =>
+    createSelector(selectUserStateFull, ({ user, games }) => {
+        const currentGame =
+            games?.find((game) => game.game_code === gameCode) ?? null;
+        return { user, currentGame };
+    });
+
+export const selectGameId = (gameCode: string | null) =>
+    createSelector(selectUserStateFull, ({ user, games }) => {
+        console.log('from selector user: ', user);
+        console.log('from selector game: ', games);
+        const currentGame =
+            games?.find((game) => game.game_code === gameCode) ?? null; // Use game.code instead of game.id
+        return { user, currentGame };
+    });

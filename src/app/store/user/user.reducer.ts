@@ -54,12 +54,17 @@ export const userReducer = createReducer(
         loading: true,
         error: null,
     })),
-    on(fetchUserSuccess, (state, { user, games }) => ({
-        ...state,
-        user,
-        games,
-        loading: false,
-    })),
+    on(fetchUserSuccess, (state, { user, games }) => {
+        const newState = {
+            ...state,
+            user,
+            games, // This should be updating correctly
+            loading: false,
+        };
+
+        console.log('Updated State in Reducer:', newState);
+        return newState;
+    }),
     on(fetchUserFailure, (state, { error }) => ({
         ...state,
         loading: false,

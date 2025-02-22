@@ -17,7 +17,7 @@ export class UserEffects {
                             user: {
                                 userId: response?.userId,
                                 username: response?.username,
-                                password: '', // Since the backend won't return it
+                                password: '',
                                 gameId: null,
                                 roleId: null,
                             },

@@ -2,7 +2,7 @@ import { createAction, props } from '@ngrx/store';
 
 export const loadSelections = createAction(
     '[Selections Component] Load Selections',
-    props<{ userId: string }>(),
+    props<{ userId: string; gameId: string }>(),
 );
 
 export const loadSelectionsSuccess = createAction(
@@ -17,7 +17,7 @@ export const loadSelectionsFailure = createAction(
 
 export const saveSelectedSquares = createAction(
     '[Selections Component] Save Squares Selection',
-    props<{ selectedSquareIds: number[] }>(),
+    props<{ gameId: string; userId: string; selectedSquareIds: number[] }>(),
 );
 
 export const saveSelectedSquaresSuccess = createAction(

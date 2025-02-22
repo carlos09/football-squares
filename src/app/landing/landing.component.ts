@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import * as startGameActions from '../store/game/game.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store/app.state';
-import { filter, Observable, take } from 'rxjs';
+import { filter, Observable } from 'rxjs';
 import { selectGameUrl } from '../store/game/game.seletors';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
@@ -47,18 +47,14 @@ export class LandingComponent implements OnInit {
         this.userId = localStorage.getItem('userId');
 
         if (this.userId) {
-            // User exists, create game directly
             this.store.dispatch(
                 startGameActions.createGame({ userId: this.userId }),
             );
         } else {
-            // Open Create User Dialog and proceed with game creation after success
             const dialogRef = this.dialog.open(CreateUserDialogComponent);
 
             dialogRef.afterClosed().subscribe((userId: string | null) => {
-                console.log('closed now with: ', userId);
                 if (userId) {
-                    console.log('dispatch create game with', userId);
                     this.store.dispatch(
                         startGameActions.createGame({ userId }),
                     );

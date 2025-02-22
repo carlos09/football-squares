@@ -5,7 +5,7 @@ import { LandingComponent } from './landing/landing.component';
 
 const routes: Routes = [
     { path: '', component: LandingComponent },
-    { path: 'game/:gameId', component: GameComponent },
+    { path: 'game/:gameCode', component: GameComponent },
 ];
 
 @NgModule({

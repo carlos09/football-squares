@@ -88,9 +88,11 @@ export class GameService {
         });
     }
 
-    getUserSelections(userId: string): Observable<any> {
-        console.log('user userID to get squres: ', userId);
-        return this.http.get(`${this.baseUrl}/api/selections/${userId}`);
+    getUserSelections(userId: string, gameId: string): Observable<any> {
+        console.log('Fetching squares for user:', userId, 'and game:', gameId);
+        return this.http.get(
+            `${this.baseUrl}/api/selections/${userId}/${gameId}`,
+        );
     }
 
     createGameCode(): Observable<GameCode> {
