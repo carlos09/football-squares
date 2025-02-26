@@ -8,12 +8,12 @@ export const selectUserState =
 
 export const selectUserId = createSelector(
     selectUserState,
-    (state) => state.user?.userId ?? null,
+    (state) => state.userId ?? null,
 );
 
 export const selectUsername = createSelector(
     selectUserState,
-    (state) => state.user?.username ?? null,
+    (state) => state.username ?? null,
 );
 
 export const selectCreateUserError = createSelector(
@@ -21,23 +21,19 @@ export const selectCreateUserError = createSelector(
     (state) => state.error,
 );
 
-// export const selectCreateUserSuccess = createSelector(
+// export const selectCreatedUser = createSelector(
 //     selectUserState,
-//     (state) => state.createUserSuccess, // Ensure this property exists in UserState
+//     (state) => state.user,
 // );
-
-export const selectCreatedUser = createSelector(
-    selectUserState,
-    (state) => state.user, // Ensure this returns the correct user object
-);
 
 export const selectUser = createSelector(
     selectUserState,
-    (state) => state.user,
+    (state) => state.username,
 );
+
 export const selectUserGames = createSelector(selectUserState, (state) => {
-    console.log('Full user state:', state); // Log the entire state object
-    return state?.games ?? []; // Ensure it never returns undefined
+    console.log('Full user state:', state);
+    return state?.games ?? [];
 });
 
 export const selectUserLoading = createSelector(
@@ -45,23 +41,64 @@ export const selectUserLoading = createSelector(
     (state) => state.loading,
 );
 
-export const selectUserStateFull = createSelector(selectUserState, (state) => ({
-    user: state.user,
-    games: state.games,
-}));
-
+export const selectUserStateFull = createSelector(
+    selectUserState,
+    (state) => ({
+        userId: state.userId,
+        username: state.username,
+        roleId: state.roleId,
+        games: state.games,
+        loading: state.loading,
+        error: state.error,
+    }), // ✅ Flattened structure
+);
 export const selectUserAndCurrentGame = (gameCode: string | null) =>
-    createSelector(selectUserStateFull, ({ user, games }) => {
+    createSelector(
+        selectUserStateFull,
+        ({ userId, username, roleId, games }) => {
+            console.log('1111 games: ', games);
+            console.log('Selector - Game Code:', gameCode);
+            console.log(
+                'Selector - Available Games:',
+                games.map((game) => game.gameCode),
+            );
+
+            const currentGame =
+                games?.find((game) => game.gameCode === gameCode) ?? null;
+
+            console.log('Selector - Found Current Game:', currentGame);
+
+            return { userId, username, roleId, currentGame }; // ✅ Flattened user properties
+        },
+    );
+
+export const selectGameAndUserIds = (gameCode: string | null) =>
+    createSelector(selectUserStateFull, ({ userId, games }) => {
+        // ✅ Flattened structure
+        console.log('Selector - Game Code:', gameCode);
+        console.log('Selector - Available Games:', games);
+
+        if (!games || games.length === 0) {
+            console.warn('No games available in store.');
+            return { gameId: '', userId: userId ?? '' }; // ✅ Direct access to `userId`
+        }
+
         const currentGame =
-            games?.find((game) => game.game_code === gameCode) ?? null;
-        return { user, currentGame };
+            games.find((game) => game.gameCode === gameCode) ?? null;
+
+        console.log('Selector - Found Current Game:', currentGame);
+
+        return {
+            gameId: currentGame?.id ?? '',
+            userId: userId ?? '',
+        };
     });
 
-export const selectGameId = (gameCode: string | null) =>
-    createSelector(selectUserStateFull, ({ user, games }) => {
-        console.log('from selector user: ', user);
-        console.log('from selector game: ', games);
-        const currentGame =
-            games?.find((game) => game.game_code === gameCode) ?? null; // Use game.code instead of game.id
-        return { user, currentGame };
-    });
+// export const selectGameId = (gameCode: string | null) =>
+//     createSelector(selectUserStateFull, ({ user, games }) => {
+//         console.log('from selector user: ', user);
+//         console.log('from selector game: ', games);
+//         const currentGame =
+//             games?.find((game) => game.game_code === gameCode) ?? null;
+//         return { user, currentGame };
+//     });

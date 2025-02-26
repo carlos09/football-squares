@@ -29,3 +29,20 @@ export const saveSelectedSquaresFailure = createAction(
     '[Selections API] Save Squares Selection Failure',
     props<{ error: any }>(),
 );
+
+export const fetchSelectedSquares = createAction(
+    '[Selection] Fetch Selected Squares',
+    props<{ gameId: string }>(),
+);
+
+// Success case
+export const fetchSelectedSquaresSuccess = createAction(
+    '[Selection] Fetch Selected Squares Success',
+    props<{ selectedSquareIds: string[] }>(),
+);
+
+// Failure case
+export const fetchSelectedSquaresFailure = createAction(
+    '[Selection] Fetch Selected Squares Failure',
+    props<{ error: string }>(),
+);

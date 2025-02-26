@@ -1,4 +1,5 @@
 import { createAction, props } from '@ngrx/store';
+import { Game } from 'src/app/models/game.model';
 
 export const generateGameCode = createAction(
     '[Generate Game Code Component] Generate Game Code',
@@ -21,8 +22,12 @@ export const createGame = createAction(
 
 export const createGameSuccess = createAction(
     '[Create Game API] Create New Game Success',
-    props<{ game: { gameId: string; gameCode: string; role: string } }>(),
-    // props<{ gameId: string; url_id: string }>(),
+    props<{
+        gameId: string;
+        gameCode: string;
+        adminUserId: string;
+        roleId: number;
+    }>(),
 );
 
 export const createGameFailure = createAction(
@@ -40,17 +45,38 @@ export const setUserIdCred = createAction(
     props<{ userId: string }>(),
 );
 
-export const fetchUserGames = createAction(
-    '[Game] Fetch User Games',
-    props<{ userId: string }>(),
+export const fetchGame = createAction(
+    '[Game] Fetch Game',
+    props<{ userId: string | null; gameId: string }>(),
 );
 
-export const fetchUserGamesSuccess = createAction(
-    '[Game] Fetch User Games Success',
-    props<{ games: { gameId: string; gameCode: string; role: string }[] }>(),
+export const fetchGameSuccess = createAction(
+    '[Game] Fetch  Game Success',
+    props<{
+        game: Game;
+    }>(),
 );
 
-export const fetchUserGamesFailure = createAction(
-    '[Game] Fetch User Games Failure',
+export const fetchGameFailure = createAction(
+    '[Game] Fetch  Game Failure',
+    props<{ error: string }>(),
+);
+
+export const getGameInfo = createAction(
+    '[Game Component] Get Game Info',
+    props<{ gameId: string }>(),
+);
+
+export const getGameInfoSuccess = createAction(
+    '[Game API] Get Game Info Success',
+    props<{
+        gameId: string;
+        gameCode: string;
+        roleId: number;
+    }>(),
+);
+
+export const getGameInfoFailure = createAction(
+    '[Game API] Get Game Info Failure',
     props<{ error: string }>(),
 );

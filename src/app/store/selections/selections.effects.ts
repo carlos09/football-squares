@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, mergeMap, of, tap, withLatestFrom } from 'rxjs';
+import {
+    catchError,
+    map,
+    mergeMap,
+    of,
+    switchMap,
+    tap,
+    withLatestFrom,
+} from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as SelectionsActions from './selections.actions';
 import { SquareSelection } from '../../models/square-selection.model';
@@ -24,6 +32,28 @@ export class SelectionsEffects {
                     }),
                     catchError((error) =>
                         of(SelectionsActions.loadSelectionsFailure({ error })),
+                    ),
+                ),
+            ),
+        ),
+    );
+
+    fetchSelectedSquares$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(SelectionsActions.fetchSelectedSquares),
+            switchMap(({ gameId }) =>
+                this.gameService.getSelectedSquares(gameId).pipe(
+                    map((selectedSquareIds) =>
+                        SelectionsActions.fetchSelectedSquaresSuccess({
+                            selectedSquareIds,
+                        }),
+                    ),
+                    catchError((error) =>
+                        of(
+                            SelectionsActions.fetchSelectedSquaresFailure({
+                                error: error.message,
+                            }),
+                        ),
                     ),
                 ),
             ),

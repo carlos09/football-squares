@@ -30,4 +30,24 @@ export const selectionsReducer = createReducer(
         error,
         loading: false,
     })),
+
+    on(SelectionsActions.fetchSelectedSquares, (state) => ({
+        ...state,
+        loading: true,
+        error: null,
+    })),
+    on(
+        SelectionsActions.fetchSelectedSquaresSuccess,
+        (state, { selectedSquareIds }) => ({
+            ...state,
+            selectedSquareIds: selectedSquareIds.map((id) => Number(id)),
+            loading: false,
+            error: null,
+        }),
+    ),
+    on(SelectionsActions.fetchSelectedSquaresFailure, (state, { error }) => ({
+        ...state,
+        loading: false,
+        error,
+    })),
 );

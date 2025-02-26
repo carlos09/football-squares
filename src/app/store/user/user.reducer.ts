@@ -7,18 +7,21 @@ import {
     fetchUserSuccess,
     fetchUserFailure,
 } from './user.actions';
-import { User } from 'src/app/models/userinfo.model';
 import { Game } from 'src/app/models/game.model';
 
 export interface UserState {
-    user: User | null;
+    userId: string;
+    username: string;
+    roleId?: any;
     games: Game[];
     loading: boolean;
     error: string | null;
 }
 
 export const initialState: UserState = {
-    user: null,
+    userId: '',
+    username: '',
+    roleId: null,
     games: [],
     loading: false,
     error: null,
@@ -35,10 +38,12 @@ export const userReducer = createReducer(
         error: null,
     })),
 
-    on(createUserSuccess, (state, { user }) => ({
+    on(createUserSuccess, (state, { userId, username, roleId }) => ({
         ...state,
         loading: false,
-        user,
+        userId, // ✅ Stores userId at root level
+        username, // ✅ Stores username at root level
+        roleId, // ✅ Stores roleId at root level
         games: [],
         error: null,
     })),
@@ -55,16 +60,20 @@ export const userReducer = createReducer(
         error: null,
     })),
     on(fetchUserSuccess, (state, { user, games }) => {
-        const newState = {
+        const newState: UserState = {
             ...state,
-            user,
-            games, // This should be updating correctly
+            userId: user.userId, // Extract userId correctly
+            username: user.username,
+            roleId: user.roleId,
+            games, // This should already be in camelCase
             loading: false,
+            error: null, // Reset error on success
         };
 
         console.log('Updated State in Reducer:', newState);
         return newState;
     }),
+
     on(fetchUserFailure, (state, { error }) => ({
         ...state,
         loading: false,

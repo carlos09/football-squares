@@ -9,7 +9,7 @@ export const createUser = createAction(
 
 export const createUserSuccess = createAction(
     '[Create User API] Create User Success',
-    props<{ user: User }>(), // No games
+    props<{ userId: string; username: string; roleId: number }>(), // ✅ No "user" wrapper
 );
 
 export const createUserFailure = createAction(

@@ -1,5 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { SelectionsState } from './selections.reducer';
+import { selectGameState } from '../game/game.seletors';
 export const SELECTIONS_STATE_NAME = 'selections';
 
 export const selectSelectionsState = createFeatureSelector<SelectionsState>(
@@ -19,4 +20,19 @@ export const selectSelectionsLoading = createSelector(
 export const selectSelectionsError = createSelector(
     selectSelectionsState,
     (state) => state.error,
+);
+
+export const selectSelectedSquares = createSelector(
+    selectSelectionsState,
+    (state) => state.selectedSquareIds,
+);
+
+// Combine game details with selected squares
+export const selectGameWithSelections = createSelector(
+    selectGameState,
+    selectSelectionsState,
+    (game, selectedSquares) => ({
+        ...game,
+        selectedSquares,
+    }),
 );

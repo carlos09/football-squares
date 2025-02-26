@@ -3,13 +3,14 @@ import { Router } from '@angular/router';
 import * as startGameActions from '../store/game/game.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store/app.state';
-import { filter, Observable } from 'rxjs';
-import { selectGameUrl } from '../store/game/game.seletors';
+import { filter, Observable, take } from 'rxjs';
+// import { selectGameUrl } from '../store/game/game.seletors';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import * as userActions from '../store/user/user.actions';
 import { Game } from '../models/game.model';
 import { selectUserGames } from '../store/user/user.selectors';
+import { selectGameId, selectGameUrl } from '../store/game/game.seletors';
 
 @Component({
     selector: 'app-landing',
@@ -37,6 +38,16 @@ export class LandingComponent implements OnInit {
         if (this.userId) {
             this.store.dispatch(userActions.fetchUser({ userId: this.userId }));
         }
+
+        this.store
+            .select(selectGameId)
+            .pipe(
+                filter((gameId) => !!gameId), // No destructuring needed
+                take(1),
+            )
+            .subscribe((gameId) => {
+                localStorage.setItem('gameId', gameId);
+            });
 
         this.gameUrl$.pipe(filter((url) => !!url)).subscribe((url) => {
             this.router.navigate([`/game/${url}`]);

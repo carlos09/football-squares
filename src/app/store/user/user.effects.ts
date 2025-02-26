@@ -12,17 +12,25 @@ export class UserEffects {
             ofType(UserActions.createUser),
             switchMap(({ username, password }) =>
                 this.gameService.createUser(username, password).pipe(
-                    map((response) =>
-                        UserActions.createUserSuccess({
-                            user: {
+                    switchMap((response) => {
+                        console.log('EFFFEFECT response: ', response);
+
+                        // Dispatch createUserSuccess
+                        const createUserSuccessAction =
+                            UserActions.createUserSuccess({
                                 userId: response?.userId,
                                 username: response?.username,
-                                password: '',
-                                gameId: null,
-                                roleId: null,
-                            },
-                        }),
-                    ),
+                                roleId: response?.roleId ?? 2, // ✅ Assign roleId
+                            });
+
+                        // Dispatch loadUserGames to fetch associated games
+                        // const loadUserGamesAction = UserActions.loadUserGames({ userId: response?.user_id });
+
+                        return [
+                            createUserSuccessAction,
+                            // loadUserGamesAction
+                        ];
+                    }),
                     catchError((error) => {
                         const errorMessage =
                             error?.error?.message ||
