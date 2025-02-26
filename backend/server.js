@@ -1,7 +1,6 @@
 require('dotenv').config();
 // const { checkUserRole } = require('./services/userService');
 const ROLES = require('./enums/roles');
-
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -60,12 +59,15 @@ app.post('/api/game-code', async (req, res) => {
 
 // Create a game
 app.post('/api/games/create', async (req, res) => {
-    console.log('hitting /games/create');
+    console.log('hitting /games/create', req.body);
+
     try {
         const { userId } = req.body;
 
-        if (!userId) {
-            return res.status(400).json({ error: 'User ID is required' });
+        const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!userId || !uuidRegex.test(userId)) {
+            return res.status(400).json({ error: 'Invalid User ID format' });
         }
 
         const gameId = crypto.randomUUID();
@@ -77,22 +79,25 @@ app.post('/api/games/create', async (req, res) => {
             await client.query('BEGIN');
 
             const gameResult = await client.query(
-                'INSERT INTO games (id, game_code, admin_user_id) VALUES ($1, $2, $3) RETURNING *',
+                'INSERT INTO games (id, game_code, admin_user_id, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *',
                 [gameId, gameCode, userId],
             );
 
             await client.query(
-                'UPDATE users SET role_id = (SELECT id FROM roles WHERE name = $1) WHERE id = $2',
-                ['gameAdmin', userId],
+                'UPDATE users SET game_id = $1, role_id = 1 WHERE user_id = $2',
+                [gameId, userId],
             );
 
             await client.query('COMMIT');
 
+            const game = gameResult.rows[0];
+
+            // Format the response
             res.json({
-                gameId: gameResult.rows[0].id,
-                gameCode: gameResult.rows[0].game_code,
-                adminUserId: gameResult.rows[0].admin_user_id,
-                role: 'gameAdmin',
+                gameId: game.id,
+                gameCode: game.game_code,
+                adminUserId: game.admin_user_id,
+                roleId: 1,
             });
         } catch (err) {
             await client.query('ROLLBACK');
@@ -121,19 +126,13 @@ app.get('/api/games/:url_id', async (req, res) => {
     }
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
 app.post('/api/users/create', async (req, res) => {
-    console.log('Request received at /api/users');
+    console.log('Request received at /api/users/create');
     try {
-        const { gameId, username, password } = req.body; // Remove userId from req.body
-        const hashedPassword = await bcrypt.hash(password, 10); // Hash password
-        const userId = crypto.randomUUID(); // Generate a new user ID
+        const { gameId, username, password } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const userId = crypto.randomUUID();
 
-        // Check if the username already exists in the same game
         const existingUser = await pool.query(
             'SELECT * FROM users WHERE game_id = $1 AND username = $2',
             [gameId, username],
@@ -145,31 +144,29 @@ app.post('/api/users/create', async (req, res) => {
             });
         }
 
-        // Insert new user with generated userId
-        const result = await pool.query(
-            'INSERT INTO users (game_id, username, password, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-            [gameId, username, hashedPassword, userId],
+        const existingAdmin = await pool.query(
+            'SELECT * FROM users WHERE game_id = $1 AND role_id = 1',
+            [gameId],
         );
 
-        console.log('Response sent:', result.rows[0]);
-        res.set('Server-Timing', `endpoint-name;desc="Save User"`);
+        const roleId = existingAdmin.rows.length > 0 ? 2 : 1;
+
+        const result = await pool.query(
+            'INSERT INTO users (game_id, username, password, user_id, role_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [gameId, username, hashedPassword, userId, roleId],
+        );
+
+        const user = result.rows[0];
+
+        // ✅ Flat JSON response (no `user` wrapper)
         res.json({
-            userId: result.rows[0].user_id, // Ensure frontend gets the correct format
-            username: result.rows[0].username,
+            userId: user.user_id,
+            username: user.username,
+            roleId: user.role_id,
         });
     } catch (err) {
-        console.error('Error in /api/users:', err); // Log full error
-
-        if (err.code === '23505') {
-            // Unique constraint violation
-            res.status(400).json({
-                error: { message: 'Username or user ID already exists.' },
-            });
-        } else {
-            res.status(500).json({
-                error: { message: err.message || 'An error occurred' },
-            });
-        }
+        console.error('Error in /api/users/create:', err);
+        res.status(500).json({ error: { message: 'An error occurred' } });
     }
 });
 
@@ -227,6 +224,62 @@ app.post('/api/login', async (req, res) => {
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+
+const toCamelCase = (obj) => {
+    if (Array.isArray(obj)) {
+        return obj.map(toCamelCase);
+    } else if (obj !== null && typeof obj === 'object') {
+        return Object.keys(obj).reduce((acc, key) => {
+            const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+                letter.toUpperCase(),
+            );
+            acc[camelKey] = toCamelCase(obj[key]);
+            return acc;
+        }, {});
+    }
+    return obj;
+};
+
+app.get('/api/users/:userId/games/:gameId', async (req, res) => {
+    const { userId, gameId } = req.params;
+    console.log(`Fetching game for userId: ${userId} and gameId: ${gameId}`);
+
+    try {
+        // Step 1: Get the correct `users.id` from `users.user_id`
+        const userResult = await pool.query(
+            `SELECT id FROM users WHERE user_id = $1`,
+            [userId],
+        );
+
+        if (!userResult.rows.length) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const actualUserId = userResult.rows[0].id; // This is the `users.id` we need
+
+        // Step 2: Fetch game using the correct `users.id`
+        const gameResult = await pool.query(
+            `SELECT g.*, ug.role_id
+             FROM games g
+             LEFT JOIN user_games ug 
+               ON g.id = ug.game_id 
+               AND ug.user_id = $2
+             WHERE g.id = $1
+               AND (g.admin_user_id = $2 OR g.id IN 
+                    (SELECT game_id FROM user_games WHERE user_id = $2))`,
+            [gameId, actualUserId], // Use actual `users.id`
+        );
+
+        if (!gameResult.rows.length) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json(toCamelCase(gameResult.rows[0]));
+    } catch (err) {
+        console.error('Error fetching game:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -333,4 +386,33 @@ app.get('/api/selections/:userId/:gameId', async (req, res) => {
         console.error('Error fetching selections:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+app.get('/api/games/:gameId/selected-squares', async (req, res) => {
+    try {
+        const gameId = req.params.gameId;
+        const game = await getGame(gameId);
+
+        if (!game) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        // Process game data and return the selected squares
+        res.json({ selectedSquares: game.selected_squares });
+    } catch (error) {
+        console.error('Error fetching selected squares:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+async function getGame(gameId) {
+    const result = await pool.query('SELECT * FROM games WHERE id = $1', [
+        gameId,
+    ]);
+    return result.rows[0]; // Return the game data
+}
+
+// Start Server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
