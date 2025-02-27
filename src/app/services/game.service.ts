@@ -33,9 +33,7 @@ export class GameService {
                 username,
                 password,
             })
-            .pipe(
-                tap((response) => console.log('FROM API: ', response)), // ✅ Debugging step
-            );
+            .pipe(tap((response) => console.log('FROM API: ', response)));
     }
 
     getUserGame(userId: string | null, gameId: string): Observable<Game> {
@@ -81,8 +79,8 @@ export class GameService {
     }
 
     saveSquareSelections(
-        gameId: string,
-        userId: string,
+        gameId: string | null,
+        userId: string | undefined,
         selectedSquares: number[],
     ): Observable<any> {
         return this.http.post(`${this.baseUrl}/api/save-selection`, {
@@ -92,14 +90,16 @@ export class GameService {
         });
     }
 
-    getUserSelections(userId: string, gameId: string): Observable<any> {
-        console.log('Fetching squares for user:', userId, 'and game:', gameId);
-        return this.http.get(
+    getUserSelections(
+        gameId: string | null,
+        userId: string | undefined,
+    ): Observable<{ selections: { square_id: number }[] }> {
+        return this.http.get<{ selections: { square_id: number }[] }>(
             `${this.baseUrl}/api/selections/${userId}/${gameId}`,
         );
     }
 
-    getSelectedSquares(gameId: string): Observable<any> {
+    getSelectedSquares(gameId: string | null): Observable<any> {
         console.log('Fetching squares for user:and game:', gameId);
         return this.http.get(
             `${this.baseUrl}/api/games/${gameId}/selected-squares`,
@@ -107,6 +107,6 @@ export class GameService {
     }
 
     createGameCode(): Observable<GameCode> {
-        return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {}); // Removed `}`
+        return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {});
     }
 }

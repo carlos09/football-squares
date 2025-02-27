@@ -319,7 +319,8 @@ app.get('/api/users/:userId', async (req, res) => {
         console.log('API Response:', JSON.stringify(response, null, 2));
 
         res.setHeader('Content-Type', 'application/json');
-        res.json(response);
+
+        res.json(toCamelCase(response));
     } catch (err) {
         console.error('Error fetching user and games:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -360,7 +361,11 @@ app.post('/api/save-selection', async (req, res) => {
 
             await client.query('COMMIT'); // Commit transaction
 
-            res.json({ message: 'Selections updated successfully' });
+            // Ensure the response returns an array
+            res.json({
+                message: 'Selections updated successfully',
+                selectedSquares: selectedSquares || [],
+            });
         } catch (error) {
             await client.query('ROLLBACK'); // Rollback if any error
             throw error;

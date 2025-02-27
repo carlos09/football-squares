@@ -41,9 +41,9 @@ export const userReducer = createReducer(
     on(createUserSuccess, (state, { userId, username, roleId }) => ({
         ...state,
         loading: false,
-        userId, // ✅ Stores userId at root level
-        username, // ✅ Stores username at root level
-        roleId, // ✅ Stores roleId at root level
+        userId,
+        username,
+        roleId,
         games: [],
         error: null,
     })),
@@ -62,15 +62,13 @@ export const userReducer = createReducer(
     on(fetchUserSuccess, (state, { user, games }) => {
         const newState: UserState = {
             ...state,
-            userId: user.userId, // Extract userId correctly
+            userId: user.userId,
             username: user.username,
             roleId: user.roleId,
-            games, // This should already be in camelCase
-            loading: false,
-            error: null, // Reset error on success
+            games,
+            error: null,
         };
 
-        console.log('Updated State in Reducer:', newState);
         return newState;
     }),
 

@@ -47,7 +47,7 @@ export const setUserIdCred = createAction(
 
 export const fetchGame = createAction(
     '[Game] Fetch Game',
-    props<{ userId: string | null; gameId: string }>(),
+    props<{ userId: string; gameId: string }>(),
 );
 
 export const fetchGameSuccess = createAction(

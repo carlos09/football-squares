@@ -41,11 +41,13 @@ export class SelectionsEffects {
     fetchSelectedSquares$ = createEffect(() =>
         this.actions$.pipe(
             ofType(SelectionsActions.fetchSelectedSquares),
-            switchMap(({ gameId }) =>
-                this.gameService.getSelectedSquares(gameId).pipe(
-                    map((selectedSquareIds) =>
+            switchMap(({ gameId, userId }) =>
+                this.gameService.getUserSelections(gameId, userId).pipe(
+                    map((response) =>
                         SelectionsActions.fetchSelectedSquaresSuccess({
-                            selectedSquareIds,
+                            selectedSquareIds: response.selections.map(
+                                (s) => s.square_id,
+                            ), // Extract square_id
                         }),
                     ),
                     catchError((error) =>
@@ -63,16 +65,17 @@ export class SelectionsEffects {
     saveSquaresSelections$ = createEffect(() =>
         this.actions$.pipe(
             ofType(SelectionsActions.saveSelectedSquares),
-            mergeMap(({ gameId, userId, selectedSquareIds }) => {
-                return this.gameService
+            mergeMap(({ gameId, userId, selectedSquareIds }) =>
+                this.gameService
                     .saveSquareSelections(gameId, userId, selectedSquareIds)
                     .pipe(
-                        map(() => {
-                            console.log('Selections saved successfully');
-                            return SelectionsActions.saveSelectedSquaresSuccess(
-                                { userId },
-                            );
-                        }),
+                        switchMap(() => [
+                            SelectionsActions.saveSelectedSquaresSuccess(),
+                            SelectionsActions.fetchSelectedSquares({
+                                gameId,
+                                userId,
+                            }), // Fetch latest state
+                        ]),
                         tap(() => {
                             this._store.dispatch(
                                 showSnackbar({
@@ -92,8 +95,8 @@ export class SelectionsEffects {
                                 }),
                             ),
                         ),
-                    );
-            }),
+                    ),
+            ),
         ),
     );
 

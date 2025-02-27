@@ -36,3 +36,8 @@ export const selectGameWithSelections = createSelector(
         selectedSquares,
     }),
 );
+
+export const selectHasChanges = createSelector(
+    selectSelectionsState,
+    (selection) => selection.hasChanges,
+);

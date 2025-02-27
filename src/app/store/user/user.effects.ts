@@ -3,7 +3,6 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, switchMap, of, mergeMap } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as UserActions from './user.actions';
-import { User } from 'src/app/models/userinfo.model';
 
 @Injectable()
 export class UserEffects {
@@ -13,18 +12,12 @@ export class UserEffects {
             switchMap(({ username, password }) =>
                 this.gameService.createUser(username, password).pipe(
                     switchMap((response) => {
-                        console.log('EFFFEFECT response: ', response);
-
-                        // Dispatch createUserSuccess
                         const createUserSuccessAction =
                             UserActions.createUserSuccess({
                                 userId: response?.userId,
                                 username: response?.username,
-                                roleId: response?.roleId ?? 2, // ✅ Assign roleId
+                                roleId: response?.roleId ?? 2,
                             });
-
-                        // Dispatch loadUserGames to fetch associated games
-                        // const loadUserGamesAction = UserActions.loadUserGames({ userId: response?.user_id });
 
                         return [
                             createUserSuccessAction,
@@ -50,10 +43,8 @@ export class UserEffects {
         this.actions$.pipe(
             ofType(UserActions.fetchUser),
             mergeMap(({ userId }) => {
-                console.log('go fetch user!', userId);
                 return this.gameService.getUserById(userId).pipe(
                     map((response) => {
-                        console.log('response::: ', response);
                         return UserActions.fetchUserSuccess({
                             user: response.user,
                             games: response.games,

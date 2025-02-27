@@ -5,22 +5,24 @@ import { Store } from '@ngrx/store';
 import {
     loadSelections,
     saveSelectedSquares,
+    updateSelectedSquares,
 } from '../store/selections/selections.actions';
 import { AppState } from '../store/app.state';
 import {
     Observable,
     take,
-    switchMap,
     map,
     Subscription,
-    of,
     filter,
+    switchMap,
     EMPTY,
-    tap,
 } from 'rxjs';
-import { selectSelectedSquareIds } from '../store/selections/selections.selectors';
 import {
-    selectGameAndUserIds,
+    selectHasChanges,
+    selectSelectedSquareIds,
+} from '../store/selections/selections.selectors';
+import {
+    selectUser,
     selectUserAndCurrentGame,
     selectUserId,
 } from '../store/user/user.selectors';
@@ -42,8 +44,9 @@ export class GameComponent implements OnInit, OnDestroy {
     selectedSquares$: Observable<number[]>;
     gameId: string | null;
     userId: string | null = null;
-    user: string | undefined = '';
+    user$: Observable<string>;
     game: Game | null = null;
+    hasChanges$: Observable<boolean>;
 
     private subscriptions = new Set<Subscription>();
 
@@ -56,6 +59,10 @@ export class GameComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.gameId = localStorage.getItem('gameId');
         this.userId = localStorage.getItem('userId');
+        this.selectedSquares$ = this.store.select(selectSelectedSquareIds);
+        this.hasChanges$ = this.store.select(selectHasChanges);
+        this.user$ = this.store.select(selectUser);
+        this.store.dispatch(selectionActions.checkForHasChanges());
 
         console.log(
             `Initial state: gameId=${this.gameId}, userId=${this.userId}`,
@@ -73,12 +80,15 @@ export class GameComponent implements OnInit, OnDestroy {
             console.log('GameId found in local storage:', this.gameId);
             this.store.dispatch(
                 GameActions.fetchGame({
-                    userId: this.userId,
+                    userId: this.userId as any,
                     gameId: this.gameId,
                 }),
             );
             this.store.dispatch(
-                selectionActions.fetchSelectedSquares({ gameId: this.gameId }),
+                selectionActions.fetchSelectedSquares({
+                    gameId: this.gameId,
+                    userId: this.userId as any,
+                }),
             );
         } else {
             console.log('No gameId found in local storage.');
@@ -146,7 +156,7 @@ export class GameComponent implements OnInit, OnDestroy {
                 console.log('Fetched current game: ', currentGame);
 
                 this.userId = userId || localStorage.getItem('userId'); // ✅ Direct access to `userId`
-                this.user = username; // ✅ Direct access to `username`
+                // this.user = username; // ✅ Direct access to `username`
                 this.game = currentGame;
                 // this.gameId = currentGame?.id;
 
@@ -188,65 +198,42 @@ export class GameComponent implements OnInit, OnDestroy {
         });
     }
 
-    updateSelectedCount(squares: number[]) {
-        this.selectedSquares$ = of(squares);
+    updateSelectedCount(squareIds: number[]) {
+        this.store.dispatch(
+            updateSelectedSquares({ selectedSquareIds: squareIds }),
+        );
     }
 
     finishSelection() {
-        console.log(
-            `FINISH SELECTION gameId=${this.gameId}, userId=${this.userId}`,
-        );
-        // this.subscriptions.add(
-        //     this.selectedSquares$
-        //         .pipe(
-        //             take(1),
-        //             switchMap((selectedSquares) =>
-        //                 this.store
-        //                     .select(
-        //                         selectGameAndUserIds(
-        //                             this.game?.game_code || '',
-        //                         ),
-        //                     )
-        //                     .pipe(
-        //                         filter(({ gameId }) => !!gameId),
-        //                         take(1),
-        //                         tap(({ gameId, userId }) => {
-        //                             console.log(
-        //                                 `Fetched from store: gameId=${gameId}, userId=${userId}`,
-        //                             );
-        //                         }),
-        //                         filter(
-        //                             ({ gameId, userId }) =>
-        //                                 !!gameId && !!userId,
-        //                         ), // Proceed only if both exist
-        //                         map(({ gameId, userId }) => ({
-        //                             gameId,
-        //                             userId,
-        //                             selectedSquares,
-        //                         })),
-        //                     ),
-        //             ),
-        //         )
-        //         .subscribe(({ gameId, userId, selectedSquares }) => {
-        //             const squaresCount = selectedSquares.length;
-        //             const dialogRef = this.dialog.open(ConfrimDialogComponent, {
-        //                 data: {
-        //                     title: 'Confirm Selection',
-        //                     message: `You have selected ${squaresCount} squares. Do you want to save?`,
-        //                 },
-        //             });
-        //             dialogRef.afterClosed().subscribe((confirmed) => {
-        //                 if (confirmed) {
-        //                     this.store.dispatch(
-        //                         saveSelectedSquares({
-        //                             gameId,
-        //                             userId,
-        //                             selectedSquareIds: selectedSquares,
-        //                         }),
-        //                     );
-        //                 }
-        //             });
-        //         }),
-        // );
+        this.selectedSquares$
+            .pipe(
+                take(1),
+                switchMap((selectedSquareIds) => {
+                    if (selectedSquareIds.length === 0) return EMPTY; // Don't proceed if no squares are selected
+
+                    const dialogRef = this.dialog.open(ConfrimDialogComponent, {
+                        data: {
+                            title: 'Confirm Selection',
+                            message: `You have selected ${selectedSquareIds.length} squares. Do you want to save?`,
+                        },
+                    });
+
+                    return dialogRef.afterClosed().pipe(
+                        take(1),
+                        filter((confirmed) => confirmed), // Proceed only if confirmed
+                        map(() => selectedSquareIds),
+                    );
+                }),
+            )
+            .subscribe((selectedSquareIds) => {
+                console.log('userId: ', this.userId);
+                this.store.dispatch(
+                    saveSelectedSquares({
+                        gameId: this.gameId, // Ensure gameId is available
+                        userId: this.userId as any, // Ensure user is set correctly
+                        selectedSquareIds,
+                    }),
+                );
+            });
     }
 }
