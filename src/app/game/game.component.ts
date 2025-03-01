@@ -57,6 +57,18 @@ export class GameComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
+        let gameCodeVar;
+        this.route.paramMap
+            .pipe(
+                map((params) => params.get('gameCode')),
+                filter(Boolean),
+                take(1),
+            )
+            .subscribe((gameCode) => {
+                gameCodeVar = gameCode;
+                this.getGameInfo(gameCode);
+            });
+
         this.gameId = localStorage.getItem('gameId');
         this.userId = localStorage.getItem('userId');
         this.selectedSquares$ = this.store.select(selectSelectedSquareIds);
@@ -91,6 +103,12 @@ export class GameComponent implements OnInit, OnDestroy {
                 }),
             );
         } else {
+            console.log('gameCodeVar: ', gameCodeVar);
+            if (gameCodeVar) {
+                this.store.dispatch(
+                    GameActions.getGameId({ gameCode: gameCodeVar as any }),
+                );
+            }
             console.log('No gameId found in local storage.');
         }
 
@@ -128,18 +146,6 @@ export class GameComponent implements OnInit, OnDestroy {
         this.subscriptions.forEach((sub) => sub.unsubscribe());
     }
 
-    findUserByGameCode() {
-        this.route.paramMap
-            .pipe(
-                map((params) => params.get('gameCode')),
-                filter(Boolean),
-                take(1),
-            )
-            .subscribe((gameCode) => {
-                this.getGameInfo(gameCode);
-            });
-    }
-
     getGameInfo(gameCode: string) {
         console.log('this.gameId before fetch: ', this.gameId);
 
@@ -149,11 +155,12 @@ export class GameComponent implements OnInit, OnDestroy {
                 filter(({ userId, currentGame }) => !!userId && !!currentGame), // ✅ Check `userId` directly
                 take(1),
             )
-            .subscribe(({ userId, username, currentGame }) => {
+            .subscribe(({ userId, currentGame }) => {
                 // ✅ Destructure updated properties
                 console.log('Fetched userId: ', userId);
-                console.log('Fetched username: ', username);
                 console.log('Fetched current game: ', currentGame);
+                this.gameId = currentGame?.id as any;
+                localStorage.setItem('gameId', this.gameId as any);
 
                 this.userId = userId || localStorage.getItem('userId'); // ✅ Direct access to `userId`
                 // this.user = username; // ✅ Direct access to `username`
@@ -166,6 +173,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     loadSelections() {
+        console.log('DO LOAD SELECTIONS!!!');
         if (!this.userId || !this.gameId) {
             console.warn('Skipping loadSelections: Missing userId or gameId');
             return;

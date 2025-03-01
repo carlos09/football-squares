@@ -17,26 +17,26 @@ import { showSnackbar } from '../shared/shared.actions';
 
 @Injectable()
 export class SelectionsEffects {
-    loadSelections$ = createEffect(() =>
-        this.actions$.pipe(
-            ofType(SelectionsActions.loadSelections),
-            mergeMap(({ userId, gameId }) =>
-                this.gameService.getUserSelections(userId, gameId).pipe(
-                    map((res) => {
-                        console.log('square selections: ', res);
-                        return SelectionsActions.loadSelectionsSuccess({
-                            selections: res.selections.map(
-                                (s: SquareSelection) => s.square_id,
-                            ),
-                        });
-                    }),
-                    catchError((error) =>
-                        of(SelectionsActions.loadSelectionsFailure({ error })),
-                    ),
-                ),
-            ),
-        ),
-    );
+    // loadSelections$ = createEffect(() =>
+    //     this.actions$.pipe(
+    //         ofType(SelectionsActions.loadSelections),
+    //         mergeMap(({ userId, gameId }) =>
+    //             this.gameService.getUserSelections(userId, gameId).pipe(
+    //                 map((res) => {
+    //                     console.log('square selections: ', res);
+    //                     return SelectionsActions.loadSelectionsSuccess({
+    //                         selections: res.selections.map(
+    //                             (s: SquareSelection) => s.square_id,
+    //                         ),
+    //                     });
+    //                 }),
+    //                 catchError((error) =>
+    //                     of(SelectionsActions.loadSelectionsFailure({ error })),
+    //                 ),
+    //             ),
+    //         ),
+    //     ),
+    // );
 
     fetchSelectedSquares$ = createEffect(() =>
         this.actions$.pipe(

@@ -56,10 +56,15 @@ export const gameReducer = createReducer(
         loading: false,
     })),
 
-    on(GameActions.fetchGame, GameActions.getGameInfo, (state) => ({
-        ...state,
-        loading: true,
-    })),
+    on(
+        GameActions.fetchGame,
+        GameActions.getGameInfo,
+        GameActions.getGameId,
+        (state) => ({
+            ...state,
+            loading: true,
+        }),
+    ),
 
     on(GameActions.fetchGameSuccess, (state, { game }) => {
         console.log('REDUCER game: ', game);
@@ -75,6 +80,7 @@ export const gameReducer = createReducer(
     on(
         GameActions.fetchGameFailure,
         GameActions.getGameInfoFailure,
+        GameActions.getGameIdFailure,
         (state, { error }) => ({
             ...state,
             loading: false,
@@ -96,5 +102,15 @@ export const gameReducer = createReducer(
                 error: null,
             };
         },
+    ),
+
+    on(
+        GameActions.createGameSuccess,
+        GameActions.getGameIdSuccess,
+        (state, { gameId }) => ({
+            ...state,
+            gameId,
+            loading: false,
+        }),
     ),
 );

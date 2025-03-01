@@ -68,5 +68,29 @@ export class GameEffects {
         ),
     );
 
+    getGameId$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.getGameId),
+            switchMap(({ gameCode }) =>
+                this.gameService.getGameId(gameCode).pipe(
+                    map((response) =>
+                        GameActions.getGameIdSuccess({
+                            gameId: response.gameId,
+                        }),
+                    ),
+                    catchError((error) =>
+                        of(
+                            GameActions.getGameIdFailure({
+                                error:
+                                    error?.error?.message ||
+                                    'Failed to fetch gameId',
+                            }),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    );
+
     constructor(private actions$: Actions, private gameService: GameService) {}
 }

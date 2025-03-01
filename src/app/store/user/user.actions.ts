@@ -4,7 +4,7 @@ import { User } from 'src/app/models/userinfo.model';
 
 export const createUser = createAction(
     '[Create User] Create User Component',
-    props<{ username: string; password: string }>(),
+    props<{ username: string; password: string; gameId?: string }>(),
 );
 
 export const createUserSuccess = createAction(

@@ -80,3 +80,20 @@ export const getGameInfoFailure = createAction(
     '[Game API] Get Game Info Failure',
     props<{ error: string }>(),
 );
+
+export const getGameId = createAction(
+    '[Game Component] Get Game Id',
+    props<{ gameCode: string }>(),
+);
+
+export const getGameIdSuccess = createAction(
+    '[Game API] Get Game Id Success',
+    props<{
+        gameId: string;
+    }>(),
+);
+
+export const getGameIdFailure = createAction(
+    '[Game API] Get Game Id Failure',
+    props<{ error: string }>(),
+);

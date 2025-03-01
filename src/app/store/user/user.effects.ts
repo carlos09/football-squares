@@ -1,40 +1,42 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, switchMap, of, mergeMap } from 'rxjs';
+import { catchError, map, switchMap, of, mergeMap, withLatestFrom } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as UserActions from './user.actions';
+import { Store } from '@ngrx/store';
+import { selectGameId } from '../game/game.seletors';
 
 @Injectable()
 export class UserEffects {
     createUser$ = createEffect(() =>
         this.actions$.pipe(
             ofType(UserActions.createUser),
-            switchMap(({ username, password }) =>
-                this.gameService.createUser(username, password).pipe(
-                    switchMap((response) => {
-                        const createUserSuccessAction =
-                            UserActions.createUserSuccess({
-                                userId: response?.userId,
-                                username: response?.username,
-                                roleId: response?.roleId ?? 2,
-                            });
-
-                        return [
-                            createUserSuccessAction,
-                            // loadUserGamesAction
-                        ];
-                    }),
-                    catchError((error) => {
-                        const errorMessage =
-                            error?.error?.message ||
-                            'An unknown error occurred.';
-                        return of(
-                            UserActions.createUserFailure({
-                                error: errorMessage,
-                            }),
-                        );
-                    }),
-                ),
+            withLatestFrom(this.store.select(selectGameId)), // Get latest gameId from store
+            switchMap(([{ username, password }, gameId]) =>
+                this.gameService
+                    .createUser(username, password, gameId || '')
+                    .pipe(
+                        // Pass '' if gameId is missing
+                        switchMap((response) => {
+                            return [
+                                UserActions.createUserSuccess({
+                                    userId: response?.userId,
+                                    username: response?.username,
+                                    roleId: response?.roleId ?? 2,
+                                }),
+                            ];
+                        }),
+                        catchError((error) => {
+                            const errorMessage =
+                                error?.error?.message ||
+                                'An unknown error occurred.';
+                            return of(
+                                UserActions.createUserFailure({
+                                    error: errorMessage,
+                                }),
+                            );
+                        }),
+                    ),
             ),
         ),
     );
@@ -62,5 +64,9 @@ export class UserEffects {
         ),
     );
 
-    constructor(private actions$: Actions, private gameService: GameService) {}
+    constructor(
+        private actions$: Actions,
+        private gameService: GameService,
+        private store: Store,
+    ) {}
 }

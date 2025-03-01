@@ -27,11 +27,17 @@ export class GameService {
         }>(`${this.baseUrl}/api/games/create`, { userId });
     }
 
-    createUser(username: string, password: string): Observable<User> {
+    createUser(
+        username: string,
+        password: string,
+        gameIdStr: string,
+    ): Observable<User> {
+        const gameId = gameIdStr.length ? gameIdStr : null;
         return this.http
             .post<User>(`${this.baseUrl}/api/users/create`, {
                 username,
                 password,
+                gameId,
             })
             .pipe(tap((response) => console.log('FROM API: ', response)));
     }
@@ -78,6 +84,12 @@ export class GameService {
             );
     }
 
+    getGameId(gameCode: string): Observable<{ gameId: string }> {
+        return this.http.get<{ gameId: string }>(
+            `${this.baseUrl}/api/game/${gameCode}`,
+        );
+    }
+
     saveSquareSelections(
         gameId: string | null,
         userId: string | undefined,
@@ -94,17 +106,18 @@ export class GameService {
         gameId: string | null,
         userId: string | undefined,
     ): Observable<{ selections: { square_id: number }[] }> {
+        console.log('DO THE SERVICE');
         return this.http.get<{ selections: { square_id: number }[] }>(
             `${this.baseUrl}/api/selections/${userId}/${gameId}`,
         );
     }
 
-    getSelectedSquares(gameId: string | null): Observable<any> {
-        console.log('Fetching squares for user:and game:', gameId);
-        return this.http.get(
-            `${this.baseUrl}/api/games/${gameId}/selected-squares`,
-        );
-    }
+    // getSelectedSquares(gameId: string | null): Observable<any> {
+    //     console.log('Fetching squares for user:and game:', gameId);
+    //     return this.http.get(
+    //         `${this.baseUrl}/api/games/${gameId}/selected-squares`,
+    //     );
+    // }
 
     createGameCode(): Observable<GameCode> {
         return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {});
