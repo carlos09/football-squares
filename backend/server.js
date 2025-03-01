@@ -1,6 +1,6 @@
 require('dotenv').config();
 // const { checkUserRole } = require('./services/userService');
-
+const ROLES = require('./enums/roles');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -50,10 +50,7 @@ app.post('/api/game-code', async (req, res) => {
             [gameCode],
         );
 
-        const gameId = result.rows[0].id;
-        const newGameCode = result.rows[0].game_code;
-
-        res.json({ id: gameId, gameCode: newGameCode });
+        res.json({ id: result.rows[0].id, gameCode: result.rows[0].game_code });
     } catch (error) {
         console.error('Error creating game:', error);
         res.status(500).json({ error: 'Failed to create game' });
@@ -62,45 +59,48 @@ app.post('/api/game-code', async (req, res) => {
 
 // Create a game
 app.post('/api/games/create', async (req, res) => {
-    console.log('hitting /games/create');
+    console.log('hitting /games/create', req.body);
+
     try {
         const { userId } = req.body;
 
-        if (!userId) {
-            return res.status(400).json({ error: 'User ID is required' });
+        const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!userId || !uuidRegex.test(userId)) {
+            return res.status(400).json({ error: 'Invalid User ID format' });
         }
 
         const gameId = crypto.randomUUID();
-        const gameCode = Math.random().toString(36).substr(2, 6).toUpperCase(); // Generate a unique 6-character code
+        const gameCode = Math.random().toString(36).substr(2, 6).toUpperCase();
 
-        // Start a transaction to ensure consistency
         const client = await pool.connect();
 
         try {
-            await client.query('BEGIN'); // Start transaction
+            await client.query('BEGIN');
 
-            // Insert the game with the generated `game_code`
             const gameResult = await client.query(
-                'INSERT INTO games (id, game_code, admin_user_id) VALUES ($1, $2, $3) RETURNING *',
+                'INSERT INTO games (id, game_code, admin_user_id, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *',
                 [gameId, gameCode, userId],
             );
 
-            // Assign the user the "gameAdmin" role
             await client.query(
-                'UPDATE users SET role_id = (SELECT id FROM roles WHERE name = $1) WHERE user_id = $2',
-                ['gameAdmin', userId],
+                'UPDATE users SET game_id = $1, role_id = 1 WHERE user_id = $2',
+                [gameId, userId],
             );
 
-            await client.query('COMMIT'); // Commit transaction
+            await client.query('COMMIT');
 
+            const game = gameResult.rows[0];
+
+            // Format the response
             res.json({
-                gameId: gameResult.rows[0].id,
-                gameCode: gameResult.rows[0].game_code, // Include `game_code` in response
-                adminUserId: gameResult.rows[0].admin_user_id,
-                role: 'gameAdmin',
+                gameId: game.id,
+                gameCode: game.game_code,
+                adminUserId: game.admin_user_id,
+                roleId: 1,
             });
         } catch (err) {
-            await client.query('ROLLBACK'); // Rollback on failure
+            await client.query('ROLLBACK');
             console.error('Transaction error:', err);
             res.status(500).json({ error: err.message });
         } finally {
@@ -126,77 +126,142 @@ app.get('/api/games/:url_id', async (req, res) => {
     }
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
 app.post('/api/users/create', async (req, res) => {
-    console.log('Request received at /api/users');
+    console.log('Request received at /api/users/create', req.body);
     try {
-        const { gameId, username, password } = req.body; // Remove userId from req.body
-        const hashedPassword = await bcrypt.hash(password, 10); // Hash password
-        const userId = crypto.randomUUID(); // Generate a new user ID
+        const { gameId, username, password } = req.body;
 
-        // Check if the username already exists in the same game
-        const existingUser = await pool.query(
-            'SELECT * FROM users WHERE game_id = $1 AND username = $2',
-            [gameId, username],
-        );
-
-        if (existingUser.rows.length > 0) {
+        if (!username || !password) {
             return res.status(400).json({
-                error: { message: 'Username already taken in this game.' },
+                error: {
+                    message: 'Missing required fields: username and password.',
+                },
             });
         }
 
-        // Insert new user with generated userId
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const userId = crypto.randomUUID();
+
+        let assignedGameId = gameId || null;
+        let roleId = 1; // Default to admin if no gameId is provided
+
+        if (gameId) {
+            // If a gameId is provided, check if the username is already taken
+            const existingUser = await pool.query(
+                'SELECT 1 FROM users WHERE game_id = $1 AND username = $2 LIMIT 1',
+                [gameId, username],
+            );
+
+            if (existingUser.rows.length > 0) {
+                return res.status(400).json({
+                    error: { message: 'Username already taken in this game.' },
+                });
+            }
+
+            // Check if there's already an admin for this game
+            const existingAdmin = await pool.query(
+                'SELECT 1 FROM users WHERE game_id = $1 AND role_id = 1 LIMIT 1',
+                [gameId],
+            );
+
+            if (existingAdmin.rows.length > 0) {
+                roleId = 2; // Default to player role if an admin exists
+            }
+        }
+
+        /// Insert user
         const result = await pool.query(
-            'INSERT INTO users (game_id, username, password, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-            [gameId, username, hashedPassword, userId],
+            `INSERT INTO users (game_id, username, password, user_id, role_id) 
+     VALUES ($1, $2, $3, $4, $5) 
+     RETURNING id, user_id, role_id`,
+            [gameId, username, hashedPassword, userId, roleId],
         );
 
-        console.log('Response sent:', result.rows[0]);
-        res.set('Server-Timing', `endpoint-name;desc="Save User"`);
-        res.json({
-            userId: result.rows[0].user_id, // Ensure frontend gets the correct format
-            username: result.rows[0].username,
-        });
-    } catch (err) {
-        console.error('Error in /api/users:', err); // Log full error
+        const insertedUserId = result.rows[0].id;
 
-        if (err.code === '23505') {
-            // Unique constraint violation
-            res.status(400).json({
-                error: { message: 'Username or user ID already exists.' },
-            });
-        } else {
-            res.status(500).json({
-                error: { message: err.message || 'An error occurred' },
-            });
-        }
+        // ✅ Ensure the user is linked to the game in `user_games`
+        await pool.query(
+            `INSERT INTO user_games (user_id, game_id, role_id, created_at) 
+     VALUES ($1, $2, $3, NOW())`,
+            [insertedUserId, gameId, roleId],
+        );
+
+        const user = result.rows[0];
+
+        res.json(toCamelCase(user));
+    } catch (err) {
+        console.error('Error in /api/users/create:', err);
+        res.status(500).json({
+            error: { message: err.message || 'An error occurred' },
+        });
     }
 });
 
 app.post('/create-game', async (req, res) => {
-    const gameId = crypto.randomUUID(); // Generate unique game ID
+    const gameId = crypto.randomUUID();
+    const adminUserId = crypto.randomUUID(); // Admin user ID
+
     try {
         console.log(`Creating game with ID: ${gameId}`);
 
-        const result = await pool.query(
-            'INSERT INTO games (id, created_at) VALUES ($1, NOW()) RETURNING *',
+        // Insert into games
+        await pool.query(
+            'INSERT INTO games (id, created_at) VALUES ($1, NOW())',
             [gameId],
         );
 
-        res.set('Server-Timing', `endpoint-name;desc="Create Game"`);
-        res.json({ success: true, gameId });
+        // Ensure role exists and get the role ID
+        const roleQuery = await pool.query(
+            "SELECT id FROM roles WHERE name = 'gameAdmin' LIMIT 1",
+        );
+        const roleId = roleQuery.rows[0]?.id || 1; // Fallback to 1 if no role found
+
+        // Insert admin user into users table
+        const result = await pool.query(
+            `INSERT INTO users (user_id, game_id, username, role_id)
+             VALUES ($1, $2, $3, $4)
+             RETURNING user_id, game_id, role_id`,
+            [adminUserId, gameId, 'adminUser', roleId], // Ensure game_id is correctly assigned
+        );
+
+        await pool.query(
+            `INSERT INTO user_games (user_id, game_id, role_id, created_at)
+             VALUES ($1, $2, (SELECT id FROM roles WHERE name = 'gameAdmin'), NOW())`,
+            [adminUserId, gameId],
+        );
+
+        const user = result.rows[0];
+
+        res.json({
+            success: true,
+            gameId,
+            adminUserId: user.user_id,
+            role: user.role_id,
+        });
     } catch (error) {
         console.error('Error creating game:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error',
-            error: error.message,
-        });
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+app.get('/api/game/:gameCode', async (req, res) => {
+    const { gameCode } = req.params;
+    console.log(`Request received to fetch gameId for gameCode: ${gameCode}`);
+
+    try {
+        const result = await pool.query(
+            'SELECT id FROM games WHERE game_code = $1',
+            [gameCode],
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json({ gameId: result.rows[0].id });
+    } catch (err) {
+        console.error(`Error in /api/game/:gameCode:`, err);
+        res.status(500).json({ error: 'An error occurred' });
     }
 });
 
@@ -230,22 +295,83 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-app.get('/api/user/:userId', async (req, res) => {
+const toCamelCase = (obj) => {
+    if (Array.isArray(obj)) {
+        return obj.map(toCamelCase);
+    } else if (obj !== null && typeof obj === 'object') {
+        return Object.keys(obj).reduce((acc, key) => {
+            const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+                letter.toUpperCase(),
+            );
+            acc[camelKey] = toCamelCase(obj[key]);
+            return acc;
+        }, {});
+    }
+    return obj;
+};
+
+app.get('/api/users/:userId/games/:gameId', async (req, res) => {
+    const { userId, gameId } = req.params;
+    console.log(`Fetching game for userId: ${userId} and gameId: ${gameId}`);
+
     try {
-        const { userId } = req.params;
-        const result = await pool.query(
-            'SELECT username FROM users WHERE user_id = $1',
+        // Step 1: Get `users.id` from `users.user_id`
+        const userResult = await pool.query(
+            `SELECT id FROM users WHERE user_id = $1`,
             [userId],
         );
 
-        if (result.rows.length === 0) {
+        if (!userResult.rows.length) {
+            console.log(`User ${userId} not found`);
             return res.status(404).json({ error: 'User not found' });
         }
-        res.set('Server-Timing', `endpoint-name;desc="Get User"`);
-        res.setHeader('Content-Type', 'application/json'); // Ensure JSON response
-        res.json(result.rows[0]); // Send JSON response
+
+        const actualUserId = userResult.rows[0].id; // The internal `users.id`
+
+        // Step 2: Check if user is linked via `user_games` OR is `admin_user_id`
+        const userGameResult = await pool.query(
+            `SELECT role_id FROM user_games WHERE user_id = $1 AND game_id = $2`,
+            [actualUserId, gameId],
+        );
+
+        let roleId = null;
+
+        if (userGameResult.rows.length) {
+            roleId = userGameResult.rows[0].role_id; // User found in user_games
+        } else {
+            // Step 3: Check if user is the game's admin
+            const adminCheckResult = await pool.query(
+                `SELECT id FROM games WHERE id = $1 AND admin_user_id = $2`,
+                [gameId, userId],
+            );
+
+            if (!adminCheckResult.rows.length) {
+                console.log(
+                    `User ${userId} is neither in user_games nor admin of game ${gameId}`,
+                );
+                return res
+                    .status(404)
+                    .json({ error: 'User is not part of this game' });
+            }
+
+            roleId = 1; // Assume `1` means admin if the user is the game's admin
+        }
+
+        // Step 4: Fetch game details
+        const gameResult = await pool.query(
+            `SELECT * FROM games WHERE id = $1`,
+            [gameId],
+        );
+
+        if (!gameResult.rows.length) {
+            console.log(`Game ${gameId} not found`);
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json(toCamelCase({ ...gameResult.rows[0], roleId }));
     } catch (err) {
-        res.status(500).json({ error: 'An error occurred' });
+        console.error('Error fetching game:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -254,27 +380,42 @@ app.get('/api/users/:userId', async (req, res) => {
     console.log(`Fetching user with userId: ${userId}`);
 
     try {
+        // Fetch user data with role name
         const userResult = await pool.query(
-            'SELECT * FROM users WHERE user_id = $1',
+            `SELECT u.*, r.name as role
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.id
+                WHERE u.user_id = $1;`,
             [userId],
         );
 
-        if (userResult.rows.length === 0) {
+        if (!userResult.rows.length) {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Fetch games associated with the user
         const gamesResult = await pool.query(
-            'SELECT * FROM games WHERE admin_user_id = $1 OR id IN (SELECT game_id FROM users WHERE user_id = $1)',
+            `SELECT g.* 
+             FROM games g
+             LEFT JOIN user_games ug ON g.id = ug.game_id
+             WHERE g.admin_user_id = $1 OR ug.user_id = $1`,
             [userId],
         );
 
-        res.json({
+        // Construct response
+        const response = {
             user: userResult.rows[0],
-            games: gamesResult.rows,
-        });
+            games: gamesResult.rows || [],
+        };
+
+        console.log('API Response:', JSON.stringify(response, null, 2));
+
+        res.setHeader('Content-Type', 'application/json');
+
+        res.json(toCamelCase(response));
     } catch (err) {
         console.error('Error fetching user and games:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -312,7 +453,11 @@ app.post('/api/save-selection', async (req, res) => {
 
             await client.query('COMMIT'); // Commit transaction
 
-            res.json({ message: 'Selections updated successfully' });
+            // Ensure the response returns an array
+            res.json({
+                message: 'Selections updated successfully',
+                selectedSquares: selectedSquares || [],
+            });
         } catch (error) {
             await client.query('ROLLBACK'); // Rollback if any error
             throw error;
@@ -325,12 +470,15 @@ app.post('/api/save-selection', async (req, res) => {
     }
 });
 
-app.get('/api/selections/:userId', async (req, res) => {
+app.get('/api/selections/:userId/:gameId', async (req, res) => {
     try {
-        const { userId } = req.params;
+        const { userId, gameId } = req.params;
+        console.log('Received request:', { userId, gameId });
 
-        const query = `SELECT * FROM selections WHERE user_id = $1`;
-        const result = await pool.query(query, [userId]);
+        const query = `SELECT * FROM selections WHERE user_id = $1 AND game_id = $2`;
+        const result = await pool.query(query, [userId, gameId]);
+
+        console.log('Query Result:', result.rows); // Log query result
 
         res.set('Server-Timing', `endpoint-name;desc="Get User Selections"`);
         res.json({ selections: result.rows });
@@ -338,4 +486,33 @@ app.get('/api/selections/:userId', async (req, res) => {
         console.error('Error fetching selections:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+// app.get('/api/games/:gameId/selected-squares', async (req, res) => {
+//     try {
+//         const gameId = req.params.gameId;
+//         const game = await getGame(gameId);
+
+//         if (!game) {
+//             return res.status(404).json({ error: 'Game not found' });
+//         }
+
+//         // Process game data and return the selected squares
+//         res.json({ selectedSquares: game.selected_squares });
+//     } catch (error) {
+//         console.error('Error fetching selected squares:', error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// });
+
+async function getGame(gameId) {
+    const result = await pool.query('SELECT * FROM games WHERE id = $1', [
+        gameId,
+    ]);
+    return result.rows[0]; // Return the game data
+}
+
+// Start Server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

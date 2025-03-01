@@ -1,10 +1,9 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { GameService } from '../../services/game.service';
 import { Store } from '@ngrx/store';
 import * as userSelectors from 'src/app/store/user/user.selectors';
 import { createUser } from 'src/app/store/user/user.actions';
-import { filter, Subject, take, takeUntil } from 'rxjs';
+import { filter, Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
     selector: 'app-create-user-dialog',
@@ -24,44 +23,36 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
+        // ✅ Listen for error messages
         this.store
             .select(userSelectors.selectCreateUserError)
+            .pipe(takeUntil(this.unsubscribe$))
             .subscribe((error) => {
-                this.errorMessage = error || ''; // Show "Username already taken" if applicable
+                this.errorMessage = error || ''; // Show error if applicable
             });
-        // this.store.select(selectCreateUserError).subscribe((error) => {
-        //     this.errorMessage = error || ''; // Show "Username already taken" if applicable
-        // });
 
-        // this.store.select(selectCreateUserSuccess).subscribe((success) => {
-        //     if (success) {
-        //         console.log('success!');
-        //         this.dialogRef.close();
-        //     }
-        // });
-
-        this.store.select(userSelectors.selectUserState).subscribe((state) => {
-            console.log('Full User State:', state);
-        });
-
+        // ✅ Continuously listen for userId until it's available
         this.store
-            .select(userSelectors.selectCreatedUser)
+            .select(userSelectors.selectUserId)
             .pipe(
-                filter((user) => !!user),
-                take(1),
+                tap((userId) => console.log('User from store:', userId)), // Debugging step
+                filter((userId) => !!userId), // Ensure userId is valid
+                takeUntil(this.unsubscribe$), // Keep listening until component is destroyed
             )
-            .subscribe((user) => {
-                console.log('in here');
-                if (user) {
-                    console.log('made it in here', user);
-                    localStorage.setItem('userId', user.userId); // Store userId
-                    this.dialogRef.close(user.userId); // Close dialog and pass userId
-                }
+            .subscribe((userId) => {
+                console.log('User ID received:', userId);
+                localStorage.setItem('userId', userId); // Store userId
+                this.dialogRef.close(userId); // Close dialog with userId
             });
     }
 
     createUser() {
-        if (!this.username || !this.password) return;
+        console.log(`Creating user - username: ${this.username}`);
+
+        if (!this.username || !this.password) {
+            this.errorMessage = 'Username and password are required.';
+            return;
+        }
 
         this.store.dispatch(
             createUser({ username: this.username, password: this.password }),

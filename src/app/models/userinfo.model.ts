@@ -4,6 +4,8 @@ export interface UserInfo {
 }
 
 export interface User {
+    userId: string;
     username: string;
-    password: string;
+    roleId?: number;
+    gameId: string;
 }

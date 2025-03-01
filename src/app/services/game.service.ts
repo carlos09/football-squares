@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { GameCode } from '../models/game-code.model';
 import { User } from '../models/userinfo.model';
+import { Game } from '../models/game.model';
 
 @Injectable({
     providedIn: 'root',
@@ -12,36 +13,40 @@ export class GameService {
 
     constructor(private http: HttpClient) {}
 
-    createGame(
-        userId: string,
-    ): Observable<{ gameId: string; gameCode: string; role: string }> {
+    createGame(userId: string): Observable<{
+        gameId: string;
+        gameCode: string;
+        adminUserId: string;
+        roleId: number;
+    }> {
         return this.http.post<{
             gameId: string;
             gameCode: string;
-            role: string;
+            adminUserId: string;
+            roleId: number;
         }>(`${this.baseUrl}/api/games/create`, { userId });
     }
 
     createUser(
         username: string,
         password: string,
-    ): Observable<{ userId: string; username: string }> {
-        console.log('create user()');
-        return this.http.post<{ userId: string; username: string }>(
-            `${this.baseUrl}/api/users/create`,
-            {
+        gameIdStr: string,
+    ): Observable<User> {
+        const gameId = gameIdStr.length ? gameIdStr : null;
+        return this.http
+            .post<User>(`${this.baseUrl}/api/users/create`, {
                 username,
                 password,
-            },
-        );
+                gameId,
+            })
+            .pipe(tap((response) => console.log('FROM API: ', response)));
     }
 
-    getUserGames(
-        userId: string,
-    ): Observable<{ gameId: string; gameCode: string; role: string }[]> {
-        return this.http.get<
-            { gameId: string; gameCode: string; role: string }[]
-        >(`${this.baseUrl}/api/users/${userId}/games`);
+    getUserGame(userId: string | null, gameId: string): Observable<Game> {
+        console.log('do getusergame');
+        return this.http.get<Game>(
+            `${this.baseUrl}/api/users/${userId}/games/${gameId}`,
+        );
     }
 
     getUser(userId: string): Observable<{ userId: string; username: string }> {
@@ -61,16 +66,33 @@ export class GameService {
         });
     }
 
-    getUserById(userId: string) {
-        console.log('get user by id');
-        return this.http.get<{ username: string }>(
-            `${this.baseUrl}/api/user/${userId}`,
+    getUserById(userId: string): Observable<{ user: User; games: Game[] }> {
+        return this.http
+            .get<{ user: User; games: Game[] }>(
+                `${this.baseUrl}/api/users/${userId}`,
+            )
+            .pipe(
+                catchError((error) => {
+                    console.error('Error fetching user:', error);
+                    return throwError(
+                        () =>
+                            new Error(
+                                error.error?.message || 'Error fetching user',
+                            ),
+                    );
+                }),
+            );
+    }
+
+    getGameId(gameCode: string): Observable<{ gameId: string }> {
+        return this.http.get<{ gameId: string }>(
+            `${this.baseUrl}/api/game/${gameCode}`,
         );
     }
 
     saveSquareSelections(
-        gameId: string,
-        userId: string,
+        gameId: string | null,
+        userId: string | undefined,
         selectedSquares: number[],
     ): Observable<any> {
         return this.http.post(`${this.baseUrl}/api/save-selection`, {
@@ -80,12 +102,24 @@ export class GameService {
         });
     }
 
-    getUserSelections(userId: string): Observable<any> {
-        console.log('user userID to get squres: ', userId);
-        return this.http.get(`${this.baseUrl}/api/selections/${userId}`);
+    getUserSelections(
+        gameId: string | null,
+        userId: string | undefined,
+    ): Observable<{ selections: { square_id: number }[] }> {
+        console.log('DO THE SERVICE');
+        return this.http.get<{ selections: { square_id: number }[] }>(
+            `${this.baseUrl}/api/selections/${userId}/${gameId}`,
+        );
     }
 
+    // getSelectedSquares(gameId: string | null): Observable<any> {
+    //     console.log('Fetching squares for user:and game:', gameId);
+    //     return this.http.get(
+    //         `${this.baseUrl}/api/games/${gameId}/selected-squares`,
+    //     );
+    // }
+
     createGameCode(): Observable<GameCode> {
-        return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {}); // Removed `}`
+        return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {});
     }
 }

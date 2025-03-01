@@ -3,19 +3,26 @@ import {
     createUser,
     createUserSuccess,
     createUserFailure,
+    fetchUser,
+    fetchUserSuccess,
+    fetchUserFailure,
 } from './user.actions';
-import { User } from 'src/app/models/userinfo.model';
+import { Game } from 'src/app/models/game.model';
 
 export interface UserState {
-    user: { userId: string; username: string } | null;
-    createUserSuccess: boolean;
+    userId: string;
+    username: string;
+    roleId?: any;
+    games: Game[];
     loading: boolean;
     error: string | null;
 }
 
 export const initialState: UserState = {
-    user: null,
-    createUserSuccess: false,
+    userId: '',
+    username: '',
+    roleId: null,
+    games: [],
     loading: false,
     error: null,
 };
@@ -31,18 +38,42 @@ export const userReducer = createReducer(
         error: null,
     })),
 
-    on(createUserSuccess, (state, { user }) => ({
+    on(createUserSuccess, (state, { userId, username, roleId }) => ({
         ...state,
         loading: false,
-        user,
-        createUserSuccess: true, // Indicate success
-        createUserError: null, // Clear any previous errors
+        userId,
+        username,
+        roleId,
+        games: [],
         error: null,
     })),
 
     on(createUserFailure, (state, { error }) => ({
         ...state,
         createUserSuccess: false,
+        loading: false,
+        error,
+    })),
+    on(fetchUser, (state) => ({
+        ...state,
+        loading: true,
+        error: null,
+    })),
+    on(fetchUserSuccess, (state, { user, games }) => {
+        const newState: UserState = {
+            ...state,
+            userId: user.userId,
+            username: user.username,
+            roleId: user.roleId,
+            games,
+            error: null,
+        };
+
+        return newState;
+    }),
+
+    on(fetchUserFailure, (state, { error }) => ({
+        ...state,
         loading: false,
         error,
     })),

@@ -9,4 +9,14 @@
         </button>
         <button (click)="clearLocalStorage()">Clear Local Storage</button>
     </div>
+
+    <div *ngIf="games$ | async as games">
+        <h2>Your Games</h2>
+        {{ games | json }}
+        <ul>
+            <li *ngFor="let game of games">
+                <a [routerLink]="['/game', game.id]">{{ game.gameCode }}</a>
+            </li>
+        </ul>
+    </div>
 </main>
