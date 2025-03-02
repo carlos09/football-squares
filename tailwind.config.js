@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: ["./src/**/*.{html,ts}"], // Add this to scan Angular files
+    darkMode: 'class',
+    content: ['./src/**/*.{html,ts}'], // Add this to scan Angular files
     theme: {
-      extend: {},
+        extend: {},
     },
     plugins: [],
-  };
-  
+};

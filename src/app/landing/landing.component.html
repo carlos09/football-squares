@@ -1,6 +1,13 @@
 <main class="flex items-center justify-center min-h-screen bg-gray-100">
     <div class="bg-white shadow-lg rounded-lg p-6">
-        <h1 class="text-xl font-bold">Welcome to the Game</h1>
+        <h1 *ngIf="!(user$ | async); else loggedIn" class="text-xl font-bold">
+            Welcome to the Game
+        </h1>
+
+        <ng-template #loggedIn>
+            <h1 class="text-xl font-bold">Welcome back, {{ user$ | async }}</h1>
+        </ng-template>
+
         <button
             (click)="createGame()"
             class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md"
@@ -12,10 +19,11 @@
 
     <div *ngIf="games$ | async as games">
         <h2>Your Games</h2>
-        {{ games | json }}
         <ul>
             <li *ngFor="let game of games">
-                <a [routerLink]="['/game', game.id]">{{ game.gameCode }}</a>
+                <a (click)="navigateToGame(game.gameCode)">{{
+                    game.gameCode
+                }}</a>
             </li>
         </ul>
     </div>

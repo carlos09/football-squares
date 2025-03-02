@@ -113,4 +113,11 @@ export const gameReducer = createReducer(
             loading: false,
         }),
     ),
+    on(GameActions.clearCurrentGame, (state) => ({
+        ...state,
+        gameCode: null,
+        gameId: null,
+        loading: true,
+        error: null,
+    })),
 );

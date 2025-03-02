@@ -97,3 +97,7 @@ export const getGameIdFailure = createAction(
     '[Game API] Get Game Id Failure',
     props<{ error: string }>(),
 );
+
+export const clearCurrentGame = createAction(
+    '[Game Component] Clear Current Game',
+);

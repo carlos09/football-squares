@@ -8,8 +8,9 @@ import { filter, Observable, take } from 'rxjs';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import * as userActions from '../store/user/user.actions';
+import * as GameActions from '../store/game/game.actions';
 import { Game } from '../models/game.model';
-import { selectUserGames } from '../store/user/user.selectors';
+import { selectUser, selectUserGames } from '../store/user/user.selectors';
 import { selectGameId, selectGameUrl } from '../store/game/game.seletors';
 
 @Component({
@@ -23,6 +24,7 @@ export class LandingComponent implements OnInit {
     gameUrl$!: Observable<string>;
     games$!: Observable<Game[]>;
     userId: string | null = null;
+    user$: Observable<string>;
 
     constructor(
         private router: Router,
@@ -34,9 +36,11 @@ export class LandingComponent implements OnInit {
         this.gameUrl$ = this.store.select(selectGameUrl);
         this.games$ = this.store.select(selectUserGames);
         this.userId = localStorage.getItem('userId');
+        this.user$ = this.store.select(selectUser);
 
         if (this.userId) {
             this.store.dispatch(userActions.fetchUser({ userId: this.userId }));
+            this.store.dispatch(GameActions.clearCurrentGame());
         }
 
         this.store
@@ -48,10 +52,10 @@ export class LandingComponent implements OnInit {
             .subscribe((gameId) => {
                 localStorage.setItem('gameId', gameId);
             });
+    }
 
-        this.gameUrl$.pipe(filter((url) => !!url)).subscribe((url) => {
-            this.router.navigate([`/game/${url}`]);
-        });
+    navigateToGame(gameId: string) {
+        this.router.navigate(['/game', gameId]);
     }
 
     createGame() {
