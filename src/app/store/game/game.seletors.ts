@@ -37,11 +37,11 @@ export const selectGameUrl = createSelector(
     (state) => state.gameCode ?? '',
 );
 
-// export const selectGameWithSelections = createSelector(
-//     selectGameState, // Selects the current game
-//     selectSelectionsState, // Selects the selected squares
-//     (gameState, selectionState) => ({
-//         ...gameState,
-//         selectedSquares: selectionState.selectedSquareIds,
-//     }),
-// );
+export const selectGameStateData = createSelector(selectGameState, (state) => ({
+    gameId: state.gameId,
+    gameCode: state.gameCode,
+    roleId: state.roleId,
+    loading: state.loading,
+    error: state.error,
+    players: state.players,
+}));

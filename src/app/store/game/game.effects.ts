@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, switchMap, of } from 'rxjs';
+import { catchError, map, switchMap, of, mergeMap, withLatestFrom } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as GameActions from './game.actions';
+import { selectUserId } from '../user/user.selectors';
+import { selectGameId } from './game.seletors';
+import { Store } from '@ngrx/store';
 
 @Injectable()
 export class GameEffects {
@@ -48,20 +51,17 @@ export class GameEffects {
         ),
     );
 
-    fetchUserGame$ = createEffect(() =>
+    fetchGame$ = createEffect(() =>
         this.actions$.pipe(
             ofType(GameActions.fetchGame),
             switchMap(({ userId, gameId }) =>
-                this.gameService.getUserGame(userId, gameId).pipe(
-                    map((game) => GameActions.fetchGameSuccess({ game })),
+                this.gameService.getGame(userId, gameId).pipe(
+                    map((game) => {
+                        console.log('game response ** ', game);
+                        return GameActions.fetchGameSuccess({ game });
+                    }),
                     catchError((error) =>
-                        of(
-                            GameActions.fetchGameFailure({
-                                error:
-                                    error?.error?.message ||
-                                    'Failed to fetch game',
-                            }),
-                        ),
+                        of(GameActions.fetchGameFailure({ error })),
                     ),
                 ),
             ),
@@ -92,5 +92,45 @@ export class GameEffects {
         ),
     );
 
-    constructor(private actions$: Actions, private gameService: GameService) {}
+    updatePaymentStatus$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.updatePlayerPaymentStatus),
+            mergeMap(({ userId, hasPaid }) =>
+                this.gameService.updatePaymentStatus(userId, hasPaid).pipe(
+                    map(() => GameActions.updatePlayerPaymentStatusSuccess()),
+                    catchError((error) =>
+                        of(GameActions.updatePlayerPaymentFailure({ error })),
+                    ),
+                ),
+            ),
+        ),
+    );
+
+    triggerFetchGameAfterPaymentUpdate$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.updatePlayerPaymentStatusSuccess),
+            withLatestFrom(
+                this.store.select(selectUserId),
+                this.store.select(selectGameId),
+            ),
+            map(([_, userId, gameId]) => {
+                if (!userId || !gameId) {
+                    console.warn(
+                        'UserId or GameId is missing, fetchGame action not dispatched.',
+                    );
+                    return { type: '[Game] Fetch Game Skipped' }; // No-op action
+                }
+                return GameActions.fetchGame({
+                    userId: userId as string,
+                    gameId: gameId as string,
+                });
+            }),
+        ),
+    );
+
+    constructor(
+        private actions$: Actions,
+        private gameService: GameService,
+        private store: Store,
+    ) {}
 }

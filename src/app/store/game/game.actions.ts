@@ -101,3 +101,17 @@ export const getGameIdFailure = createAction(
 export const clearCurrentGame = createAction(
     '[Game Component] Clear Current Game',
 );
+
+export const updatePlayerPaymentStatus = createAction(
+    '[Game] Update Player Payment Status',
+    props<{ userId: string; hasPaid: boolean }>(),
+);
+
+export const updatePlayerPaymentStatusSuccess = createAction(
+    '[Game] Update Player Payment Status Success',
+);
+
+export const updatePlayerPaymentFailure = createAction(
+    '[Game API] Update Player Payment Status Failure',
+    props<{ error: any }>(),
+);

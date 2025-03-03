@@ -30,20 +30,20 @@ export class GameService {
     createUser(
         username: string,
         password: string,
-        gameIdStr: string,
+        gameIdStr?: string,
     ): Observable<User> {
-        const gameId = gameIdStr.length ? gameIdStr : null;
-        return this.http
-            .post<User>(`${this.baseUrl}/api/users/create`, {
-                username,
-                password,
-                gameId,
-            })
-            .pipe(tap((response) => console.log('FROM API: ', response)));
+        console.log('gameIdStr: ', gameIdStr);
+        const gameId = gameIdStr && gameIdStr.trim().length ? gameIdStr : null;
+
+        console.log('gameId to pass in: ', gameId);
+        return this.http.post<User>(`${this.baseUrl}/api/users/create`, {
+            username,
+            password,
+            gameId,
+        });
     }
 
     getUserGame(userId: string | null, gameId: string): Observable<Game> {
-        console.log('do getusergame');
         return this.http.get<Game>(
             `${this.baseUrl}/api/users/${userId}/games/${gameId}`,
         );
@@ -55,8 +55,10 @@ export class GameService {
         );
     }
 
-    getGame(gameId: string): Observable<any> {
-        return this.http.get(`${this.baseUrl}/game/${gameId}`);
+    getGame(userId: string, gameId: string): Observable<Game> {
+        return this.http.get<Game>(
+            `${this.baseUrl}/api/game/${gameId}/user/${userId}`,
+        );
     }
 
     joinGame(gameId: string, username: string): Observable<any> {
@@ -106,9 +108,17 @@ export class GameService {
         gameId: string | null,
         userId: string | undefined,
     ): Observable<{ selections: { square_id: number }[] }> {
-        console.log('DO THE SERVICE');
         return this.http.get<{ selections: { square_id: number }[] }>(
             `${this.baseUrl}/api/selections/${userId}/${gameId}`,
+        );
+    }
+
+    updatePaymentStatus(userId: string, hasPaid: boolean) {
+        return this.http.patch(
+            `${this.baseUrl}/api/users/${userId}/payment-status`,
+            {
+                hasPaid,
+            },
         );
     }
 

@@ -1,10 +1,12 @@
 import { createReducer, on } from '@ngrx/store';
 import * as GameActions from './game.actions';
+import { Player } from 'src/app/models/player.model';
 
 export interface GameState {
     gameId: string | null;
     gameCode: string | null;
     roleId: number | null;
+    players: Player[];
     loading: boolean;
     error: any;
 }
@@ -13,6 +15,7 @@ export const initialState: GameState = {
     gameId: null,
     gameCode: null,
     roleId: null,
+    players: [],
     loading: false,
     error: null,
 };
@@ -66,17 +69,15 @@ export const gameReducer = createReducer(
         }),
     ),
 
-    on(GameActions.fetchGameSuccess, (state, { game }) => {
-        console.log('REDUCER game: ', game);
-        return {
-            ...state,
-            gameId: game.id,
-            gameCode: game.gameCode,
-            roleId: game.roleId ?? null,
-            loading: false,
-            error: null,
-        };
-    }),
+    on(GameActions.fetchGameSuccess, (state, { game }) => ({
+        ...state,
+        gameId: game.id,
+        gameCode: game.gameCode,
+        roleId: game.roleId,
+        players: game.players,
+        loading: false,
+        error: null,
+    })),
     on(
         GameActions.fetchGameFailure,
         GameActions.getGameInfoFailure,
@@ -90,9 +91,6 @@ export const gameReducer = createReducer(
     on(
         GameActions.getGameInfoSuccess,
         (state, { gameId, gameCode, roleId }) => {
-            console.log(
-                `gameId: ${gameId}, gameCode: ${gameCode}, roleId: ${roleId}`,
-            );
             return {
                 ...state,
                 gameId,
@@ -117,7 +115,18 @@ export const gameReducer = createReducer(
         ...state,
         gameCode: null,
         gameId: null,
-        loading: true,
+        players: [],
+        roleId: null,
+        loading: false,
         error: null,
     })),
+
+    on(GameActions.updatePlayerPaymentStatus, (state, { userId, hasPaid }) => {
+        return {
+            ...state,
+            players: state.players.map((player) =>
+                player.id === userId ? { ...player, hasPaid } : player,
+            ),
+        };
+    }),
 );

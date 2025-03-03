@@ -88,4 +88,11 @@ export const selectionsReducer = createReducer(
         loading: false,
         error, // Store the error message
     })),
+
+    on(SelectionsActions.clearSelections, (state) => ({
+        ...state,
+        selectedSquareIds: [],
+        hasChanges: false,
+        loading: false,
+    })),
 );

@@ -31,8 +31,10 @@ import * as UserActions from '../store/user/user.actions';
 import * as GameActions from '../store/game/game.actions';
 import * as selectionActions from '../store/selections/selections.actions';
 import { Game } from '../models/game.model';
+import { Player } from '../models/player.model';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
-import { selectGameId } from '../store/game/game.seletors';
+import { selectGameId, selectGameStateData } from '../store/game/game.seletors';
+import { Role } from '../enums/roles.enum';
 
 @Component({
     selector: 'app-game',
@@ -47,6 +49,9 @@ export class GameComponent implements OnInit, OnDestroy {
     user$: Observable<string>;
     game: Game | null = null;
     hasChanges$: Observable<boolean>;
+    gameState$: Observable<any>;
+    isGameAdmin = false;
+    role = Role;
 
     private subscriptions = new Set<Subscription>();
 
@@ -75,6 +80,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.hasChanges$ = this.store.select(selectHasChanges);
         this.user$ = this.store.select(selectUser);
         this.store.dispatch(selectionActions.checkForHasChanges());
+        this.gameState$ = this.store.select(selectGameStateData);
 
         console.log(
             `Initial state: gameId=${this.gameId}, userId=${this.userId}`,
@@ -88,20 +94,9 @@ export class GameComponent implements OnInit, OnDestroy {
             this.store.dispatch(UserActions.fetchUser({ userId: this.userId }));
         }
 
-        if (this.gameId) {
+        if (this.gameId && this.userId) {
             console.log('GameId found in local storage:', this.gameId);
-            this.store.dispatch(
-                GameActions.fetchGame({
-                    userId: this.userId as any,
-                    gameId: this.gameId,
-                }),
-            );
-            this.store.dispatch(
-                selectionActions.fetchSelectedSquares({
-                    gameId: this.gameId,
-                    userId: this.userId as any,
-                }),
-            );
+            this.getGameDetails();
         } else {
             console.log('gameCodeVar: ', gameCodeVar);
             if (gameCodeVar) {
@@ -144,6 +139,23 @@ export class GameComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscriptions.forEach((sub) => sub.unsubscribe());
+        this.store.dispatch(GameActions.clearCurrentGame());
+        this.store.dispatch(selectionActions.clearSelections());
+    }
+
+    getGameDetails() {
+        this.store.dispatch(
+            GameActions.fetchGame({
+                userId: this.userId as any,
+                gameId: this.gameId as any,
+            }),
+        );
+        this.store.dispatch(
+            selectionActions.fetchSelectedSquares({
+                gameId: this.gameId,
+                userId: this.userId as any,
+            }),
+        );
     }
 
     getGameInfo(gameCode: string) {
@@ -168,6 +180,7 @@ export class GameComponent implements OnInit, OnDestroy {
                 // this.gameId = currentGame?.id;
 
                 console.log('Updated game info: ', this.game);
+
                 this.loadSelections();
             });
     }
@@ -188,9 +201,11 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     openCreateUserDialog(): void {
+        console.log('gameId to pass to create user: ', this.gameId);
         const dialogRef = this.dialog.open(CreateUserDialogComponent, {
             width: '400px',
             disableClose: true, // Prevent closing without creating a user
+            data: { gameId: this.gameId }, // Pass gameId to the dialog
         });
 
         dialogRef.afterClosed().subscribe((userId) => {
@@ -199,6 +214,7 @@ export class GameComponent implements OnInit, OnDestroy {
                 console.log('User created with ID:', userId);
                 localStorage.setItem('userId', userId);
                 this.userId = userId;
+                this.getGameDetails();
                 this.store.dispatch(UserActions.fetchUser({ userId }));
             } else {
                 console.error('User creation was canceled or failed.');
@@ -243,5 +259,20 @@ export class GameComponent implements OnInit, OnDestroy {
                     }),
                 );
             });
+    }
+
+    togglePaymentStatus(player: any, hasPaid: boolean) {
+        console.log('player: p, ', player);
+        console.log('hasPaid: ', hasPaid);
+        // if (!this.isGameAdmin) return; // Only allow game admin to toggle
+        // player.hasPaid = !player.hasPaid;
+        this.store.dispatch(
+            GameActions.updatePlayerPaymentStatus({
+                userId: player.userId,
+                hasPaid,
+            }),
+        );
+
+        // this.gameService.updatePlayerPaymentStatus(player.id, player.hasPaid).subscribe();
     }
 }

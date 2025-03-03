@@ -40,7 +40,6 @@ export class LandingComponent implements OnInit {
 
         if (this.userId) {
             this.store.dispatch(userActions.fetchUser({ userId: this.userId }));
-            this.store.dispatch(GameActions.clearCurrentGame());
         }
 
         this.store
@@ -50,12 +49,25 @@ export class LandingComponent implements OnInit {
                 take(1),
             )
             .subscribe((gameId) => {
+                console.log('NOW HAVE GAMEID: ', gameId);
                 localStorage.setItem('gameId', gameId);
+            });
+
+        this.store
+            .select(selectGameUrl)
+            .pipe(
+                filter((gameCode) => !!gameCode), // Ensure gameCode is not null/undefined
+                take(1), // Navigate only once when it's populated
+            )
+            .subscribe((gameCode) => {
+                console.log('Navigating to game with gameCode:', gameCode);
+                this.navigateToGame(gameCode);
             });
     }
 
-    navigateToGame(gameId: string) {
-        this.router.navigate(['/game', gameId]);
+    navigateToGame(gameCode: string) {
+        console.log('gameId: ', gameCode);
+        this.router.navigate(['/game', gameCode]);
     }
 
     createGame() {

@@ -19,6 +19,7 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
 
     constructor(
         private dialogRef: MatDialogRef<CreateUserDialogComponent>,
+        @Inject(MAT_DIALOG_DATA) public data: { gameId: string },
         private store: Store,
     ) {}
 
@@ -48,6 +49,7 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
 
     createUser() {
         console.log(`Creating user - username: ${this.username}`);
+        console.log('create user with gameId: ', this.data.gameId);
 
         if (!this.username || !this.password) {
             this.errorMessage = 'Username and password are required.';
@@ -55,7 +57,11 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
         }
 
         this.store.dispatch(
-            createUser({ username: this.username, password: this.password }),
+            createUser({
+                username: this.username,
+                password: this.password,
+                gameId: this.data.gameId,
+            }),
         );
     }
 

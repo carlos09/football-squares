@@ -22,6 +22,7 @@ import { environment } from '../environments/environment';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { GameComponent } from './game/game.component';
 import { LandingComponent } from './landing/landing.component';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @NgModule({
     declarations: [
@@ -41,6 +42,7 @@ import { LandingComponent } from './landing/landing.component';
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
+        MatSlideToggleModule,
         FormsModule,
         MatSnackBarModule,
         StoreModule.forRoot(appReducer),

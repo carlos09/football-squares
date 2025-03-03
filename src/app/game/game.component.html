@@ -17,4 +17,52 @@
             }})
         </button>
     </div>
+
+    <div class="p-6 bg-white shadow-lg rounded-lg">
+        <h2 class="text-xl font-bold">Players</h2>
+
+        <ul>
+            <li *ngFor="let player of (gameState$ | async)?.players">
+                <div class="flex justify-between items-center p-2 border-b">
+                    <span>
+                        {{ player.username }}
+                        <span
+                            *ngIf="player.roleId === role.GameAdmin"
+                            class="text-sm text-green-600"
+                        >
+                            (Game Admin)
+                        </span>
+                    </span>
+
+                    <span
+                        *ngIf="(gameState$ | async)?.roleId === role.GameAdmin"
+                    >
+                        <mat-slide-toggle
+                            [checked]="player.hasPaid"
+                            (change)="
+                                togglePaymentStatus(player, $event.checked)
+                            "
+                            color="primary"
+                        >
+                            Paid
+                        </mat-slide-toggle>
+                    </span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- <p>Game ID: {{ (gameState$ | async)?.gameId }}</p>
+    <p>Game Code: {{ (gameState$ | async)?.gameCode }}</p>
+    <p>Role ID: {{ (gameState$ | async)?.roleId }}</p>
+    <p *ngIf="(gameState$ | async)?.loading">Loading...</p>
+    <p *ngIf="(gameState$ | async)?.error">
+        Error: {{ (gameState$ | async)?.error }}
+    </p>
+
+    <ul>
+        <li *ngFor="let player of (gameState$ | async)?.players">
+            {{ player.name }} ({{ player.status }})
+        </li>
+    </ul> -->
 </main>
