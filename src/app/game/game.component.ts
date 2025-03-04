@@ -33,8 +33,13 @@ import * as selectionActions from '../store/selections/selections.actions';
 import { Game } from '../models/game.model';
 import { Player } from '../models/player.model';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
-import { selectGameId, selectGameStateData } from '../store/game/game.seletors';
+import {
+    selectGameId,
+    selectGameStateData,
+    selectUserSelectedSquares,
+} from '../store/game/game.seletors';
 import { Role } from '../enums/roles.enum';
+import { SquareSelection } from '../models/square-selection.model';
 
 @Component({
     selector: 'app-game',
@@ -44,6 +49,7 @@ import { Role } from '../enums/roles.enum';
 })
 export class GameComponent implements OnInit, OnDestroy {
     selectedSquares$: Observable<number[]>;
+    gameUserSelections$: Observable<SquareSelection[]>;
     gameId: string | null;
     userId: string | null = null;
     user$: Observable<string>;
@@ -77,6 +83,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.gameId = localStorage.getItem('gameId');
         this.userId = localStorage.getItem('userId');
         this.selectedSquares$ = this.store.select(selectSelectedSquareIds);
+        this.gameUserSelections$ = this.store.select(selectUserSelectedSquares);
         this.hasChanges$ = this.store.select(selectHasChanges);
         this.user$ = this.store.select(selectUser);
         this.store.dispatch(selectionActions.checkForHasChanges());

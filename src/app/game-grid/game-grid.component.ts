@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { loadSelections } from '../store/selections/selections.actions';
 import { selectSelectedSquareIds } from '../store/selections/selections.selectors';
 import { Observable } from 'rxjs';
+import { SquareSelection } from '../models/square-selection.model';
 
 @Component({
     selector: 'app-game-grid',
@@ -14,24 +15,28 @@ import { Observable } from 'rxjs';
 })
 export class GameGridComponent {
     @Input() selectedSquares: number[] = [];
+    @Input() takenSquares: SquareSelection[] = [];
     @Output() selectionChanged = new EventEmitter<number[]>();
     numbers = Array.from({ length: 100 }, (_, i) => i + 1);
 
     toggleSquare(num: number) {
+        if (this.isTaken(num)) return; // Prevent selection if already taken
+
         const index = this.selectedSquares.indexOf(num);
         const updatedSelection =
             index > -1
                 ? this.selectedSquares.filter((id) => id !== num) // Remove the square
                 : [...this.selectedSquares, num]; // Add the square
 
-        this.selectedSquares = updatedSelection; // Update the property
+        this.selectedSquares = updatedSelection;
         console.log('selection:: ', this.selectedSquares);
 
-        this.selectionChanged.emit(this.selectedSquares); // Emit updated array
+        this.selectionChanged.emit(this.selectedSquares);
     }
 
-    updateSelection(squareIds: number[]) {
-        this.selectedSquares = squareIds;
-        this.selectionChanged.emit(this.selectedSquares);
+    isTaken(num: number): boolean {
+        return this.takenSquares.some(
+            (selection) => selection.squareId === num,
+        );
     }
 }

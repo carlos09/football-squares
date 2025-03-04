@@ -479,7 +479,7 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'Game not found' });
         }
 
-        // Fetch user role (probably stored in user_games, not users)
+        // Fetch user role
         const userRoleResult = await pool.query(
             `SELECT role_id FROM user_games WHERE user_id = $1 AND game_id = $2`,
             [userId, gameId],
@@ -489,12 +489,18 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found in game' });
         }
 
-        // Fetch players in the game, including hasPaid (from user_games)
+        // Fetch players in the game
         const playersResult = await pool.query(
             `SELECT ug.user_id, u.username, ug.role_id, u.has_paid 
              FROM user_games ug
              JOIN users u ON ug.user_id = u.id
              WHERE ug.game_id = $1`,
+            [gameId],
+        );
+
+        // Fetch all square selections for the game
+        const selectionsResult = await pool.query(
+            `SELECT square_id, user_id FROM selections WHERE game_id = $1`,
             [gameId],
         );
 
@@ -508,6 +514,10 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
                     username: player.username,
                     roleId: player.role_id,
                     hasPaid: player.has_paid ?? false,
+                })),
+                selections: selectionsResult.rows.map((selection) => ({
+                    squareId: selection.square_id,
+                    userId: selection.user_id,
                 })),
             }),
         );
@@ -544,23 +554,6 @@ app.patch('/api/users/:userId/payment-status', async (req, res) => {
         res.status(500).json({ error: 'Failed to update payment status' });
     }
 });
-
-// app.get('/api/games/:gameId/selected-squares', async (req, res) => {
-//     try {
-//         const gameId = req.params.gameId;
-//         const game = await getGame(gameId);
-
-//         if (!game) {
-//             return res.status(404).json({ error: 'Game not found' });
-//         }
-
-//         // Process game data and return the selected squares
-//         res.json({ selectedSquares: game.selected_squares });
-//     } catch (error) {
-//         console.error('Error fetching selected squares:', error);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// });
 
 async function getGame(gameId) {
     const result = await pool.query('SELECT * FROM games WHERE id = $1', [

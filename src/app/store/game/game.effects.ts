@@ -32,17 +32,14 @@ export class GameEffects {
             ofType(GameActions.createGame),
             switchMap(({ userId }) =>
                 this.gameService.createGame(userId).pipe(
-                    map(({ gameId, gameCode, adminUserId, roleId }) => {
-                        console.log(
-                            `gameId: ${gameId}, gameCode: ${gameCode}, roleId: ${roleId}`,
-                        );
-                        return GameActions.createGameSuccess({
+                    map(({ gameId, gameCode, adminUserId, roleId }) =>
+                        GameActions.createGameSuccess({
                             gameId,
                             gameCode,
                             adminUserId,
                             roleId,
-                        });
-                    }),
+                        }),
+                    ),
                     catchError((error) =>
                         of(GameActions.createGameFailure({ error })),
                     ),
@@ -56,10 +53,7 @@ export class GameEffects {
             ofType(GameActions.fetchGame),
             switchMap(({ userId, gameId }) =>
                 this.gameService.getGame(userId, gameId).pipe(
-                    map((game) => {
-                        console.log('game response ** ', game);
-                        return GameActions.fetchGameSuccess({ game });
-                    }),
+                    map((game) => GameActions.fetchGameSuccess({ game })),
                     catchError((error) =>
                         of(GameActions.fetchGameFailure({ error })),
                     ),
