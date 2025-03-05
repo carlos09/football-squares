@@ -35,17 +35,14 @@ export const selectUserLoading = createSelector(
     (state) => state.loading,
 );
 
-export const selectUserStateFull = createSelector(
-    selectUserState,
-    (state) => ({
-        userId: state.userId,
-        username: state.username,
-        roleId: state.roleId,
-        games: state.games,
-        loading: state.loading,
-        error: state.error,
-    }), // ✅ Flattened structure
-);
+export const selectUserStateFull = createSelector(selectUserState, (state) => ({
+    userId: state.userId,
+    username: state.username,
+    roleId: state.roleId,
+    games: state.games,
+    loading: state.loading,
+    error: state.error,
+}));
 export const selectUserAndCurrentGame = (gameCode: string | null) =>
     createSelector(
         selectUserStateFull,
@@ -53,15 +50,14 @@ export const selectUserAndCurrentGame = (gameCode: string | null) =>
             const currentGame =
                 games?.find((game) => game.gameCode === gameCode) ?? null;
 
-            return { userId, username, roleId, currentGame }; // ✅ Flattened user properties
+            return { userId, username, roleId, currentGame };
         },
     );
 
 export const selectGameAndUserIds = (gameCode: string | null) =>
     createSelector(selectUserStateFull, ({ userId, games }) => {
         if (!games || games.length === 0) {
-            console.warn('No games available in store.');
-            return { gameId: '', userId: userId ?? '' }; // ✅ Direct access to `userId`
+            return { gameId: '', userId: userId ?? '' };
         }
 
         const currentGame =

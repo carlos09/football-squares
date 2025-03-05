@@ -44,7 +44,7 @@ export const selectionsReducer = createReducer(
             ...state,
             selectedSquareIds: Array.isArray(selectedSquareIds)
                 ? selectedSquareIds.map((id) => Number(id))
-                : [], // Default to an empty array if invalid
+                : [],
             loading: false,
             error: null,
         }),
@@ -80,13 +80,13 @@ export const selectionsReducer = createReducer(
         selectedSquareIds: [],
         hasChanges: false,
         loading: false,
-        error: null, // Reset errors on success
+        error: null,
     })),
 
     on(SelectionsActions.saveSelectedSquaresFailure, (state, { error }) => ({
         ...state,
         loading: false,
-        error, // Store the error message
+        error,
     })),
 
     on(SelectionsActions.clearSelections, (state) => ({

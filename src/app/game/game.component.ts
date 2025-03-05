@@ -230,6 +230,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     updateSelectedCount(squareIds: number[]) {
+        console.log('square ids emitted: ', squareIds);
         this.store.dispatch(
             updateSelectedSquares({ selectedSquareIds: squareIds }),
         );

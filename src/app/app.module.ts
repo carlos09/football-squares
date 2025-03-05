@@ -23,6 +23,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { GameComponent } from './game/game.component';
 import { LandingComponent } from './landing/landing.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { HeaderComponent } from './header/header.component';
 
 @NgModule({
     declarations: [
@@ -33,6 +34,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
         ConfrimDialogComponent,
         GameComponent,
         LandingComponent,
+        HeaderComponent,
     ],
     imports: [
         BrowserModule,

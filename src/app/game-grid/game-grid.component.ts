@@ -1,10 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { SquarePickComponent } from '../dialog/square-pick/square-pick.component';
-import { Store } from '@ngrx/store';
-import { loadSelections } from '../store/selections/selections.actions';
-import { selectSelectedSquareIds } from '../store/selections/selections.selectors';
-import { Observable } from 'rxjs';
 import { SquareSelection } from '../models/square-selection.model';
 
 @Component({
@@ -20,21 +14,24 @@ export class GameGridComponent {
     numbers = Array.from({ length: 100 }, (_, i) => i + 1);
 
     toggleSquare(num: number) {
-        if (this.isTaken(num)) return; // Prevent selection if already taken
+        console.log('this.selectedSquares: ', this.selectedSquares);
+        if (this.isTaken(num)) return;
 
-        const index = this.selectedSquares.indexOf(num);
-        const updatedSelection =
-            index > -1
-                ? this.selectedSquares.filter((id) => id !== num) // Remove the square
-                : [...this.selectedSquares, num]; // Add the square
+        const updatedSelection = this.selectedSquares.includes(num)
+            ? this.selectedSquares.filter((id) => id !== num)
+            : [...this.selectedSquares, num];
 
-        this.selectedSquares = updatedSelection;
-        console.log('selection:: ', this.selectedSquares);
-
-        this.selectionChanged.emit(this.selectedSquares);
+        this.selectionChanged.emit([...updatedSelection]);
     }
 
     isTaken(num: number): boolean {
+        if (this.selectedSquares.includes(num)) {
+            this.takenSquares = this.takenSquares.filter(
+                (s) => s.squareId !== num,
+            );
+            return false;
+        }
+
         return this.takenSquares.some(
             (selection) => selection.squareId === num,
         );

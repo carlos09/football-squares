@@ -2,12 +2,14 @@
     <!-- Grid Container -->
     <div class="grid grid-cols-10 gap-1 w-[820px]">
         <div
-            class="grid-item flex items-center justify-center h-[80px] text-sm cursor-pointer transition rounded-md border border-slate-400"
+            class="grid-item flex items-center justify-center h-[80px] text-sm cursor-pointer transition-transform duration-200 ease-in-out rounded-md border border-slate-400"
             *ngFor="let num of numbers"
             (click)="toggleSquare(num)"
             [class.bg-blue-500]="selectedSquares.includes(num)"
             [class.bg-gray-500]="isTaken(num) && !selectedSquares.includes(num)"
             [class.cursor-not-allowed]="isTaken(num)"
+            [class.hover:scale-105]="!isTaken(num)"
+            [class.hover:shadow-lg]="!isTaken(num)"
         >
             {{ num }}
         </div>

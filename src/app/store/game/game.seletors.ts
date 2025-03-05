@@ -1,6 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GameState } from './game.reducer';
-import { selectSelectionsState } from '../selections/selections.selectors';
 
 export const GAME_STATE_NAME = 'game';
 
