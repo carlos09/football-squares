@@ -1,10 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { SquarePickComponent } from '../dialog/square-pick/square-pick.component';
-import { Store } from '@ngrx/store';
-import { loadSelections } from '../store/selections/selections.actions';
-import { selectSelectedSquareIds } from '../store/selections/selections.selectors';
-import { Observable } from 'rxjs';
+import { SquareSelection } from '../models/square-selection.model';
 
 @Component({
     selector: 'app-game-grid',
@@ -14,24 +9,31 @@ import { Observable } from 'rxjs';
 })
 export class GameGridComponent {
     @Input() selectedSquares: number[] = [];
+    @Input() takenSquares: SquareSelection[] = [];
     @Output() selectionChanged = new EventEmitter<number[]>();
     numbers = Array.from({ length: 100 }, (_, i) => i + 1);
 
     toggleSquare(num: number) {
-        const index = this.selectedSquares.indexOf(num);
-        const updatedSelection =
-            index > -1
-                ? this.selectedSquares.filter((id) => id !== num) // Remove the square
-                : [...this.selectedSquares, num]; // Add the square
+        console.log('this.selectedSquares: ', this.selectedSquares);
+        if (this.isTaken(num)) return;
 
-        this.selectedSquares = updatedSelection; // Update the property
-        console.log('selection:: ', this.selectedSquares);
+        const updatedSelection = this.selectedSquares.includes(num)
+            ? this.selectedSquares.filter((id) => id !== num)
+            : [...this.selectedSquares, num];
 
-        this.selectionChanged.emit(this.selectedSquares); // Emit updated array
+        this.selectionChanged.emit([...updatedSelection]);
     }
 
-    updateSelection(squareIds: number[]) {
-        this.selectedSquares = squareIds;
-        this.selectionChanged.emit(this.selectedSquares);
+    isTaken(num: number): boolean {
+        if (this.selectedSquares.includes(num)) {
+            this.takenSquares = this.takenSquares.filter(
+                (s) => s.squareId !== num,
+            );
+            return false;
+        }
+
+        return this.takenSquares.some(
+            (selection) => selection.squareId === num,
+        );
     }
 }

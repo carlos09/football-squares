@@ -1,3 +1,4 @@
 export interface SquareSelection {
-    square_id: number;
+    squareId: number;
+    userId: string;
 }

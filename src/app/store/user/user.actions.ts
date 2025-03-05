@@ -9,7 +9,12 @@ export const createUser = createAction(
 
 export const createUserSuccess = createAction(
     '[Create User API] Create User Success',
-    props<{ userId: string; username: string; roleId: number }>(),
+    props<{
+        userId: string;
+        username: string;
+        roleId: number;
+        gameId: string | null;
+    }>(),
 );
 
 export const createUserFailure = createAction(

@@ -27,7 +27,6 @@ export const selectSelectedSquares = createSelector(
     (state) => state.selectedSquareIds,
 );
 
-// Combine game details with selected squares
 export const selectGameWithSelections = createSelector(
     selectGameState,
     selectSelectionsState,

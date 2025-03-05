@@ -1,43 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import {
-    catchError,
-    map,
-    mergeMap,
-    of,
-    switchMap,
-    tap,
-    withLatestFrom,
-} from 'rxjs';
+import { catchError, map, mergeMap, of, switchMap, tap } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as SelectionsActions from './selections.actions';
-import { SquareSelection } from '../../models/square-selection.model';
+import * as GameActions from '../game/game.actions';
 import { Store } from '@ngrx/store';
 import { showSnackbar } from '../shared/shared.actions';
 
 @Injectable()
 export class SelectionsEffects {
-    // loadSelections$ = createEffect(() =>
-    //     this.actions$.pipe(
-    //         ofType(SelectionsActions.loadSelections),
-    //         mergeMap(({ userId, gameId }) =>
-    //             this.gameService.getUserSelections(userId, gameId).pipe(
-    //                 map((res) => {
-    //                     console.log('square selections: ', res);
-    //                     return SelectionsActions.loadSelectionsSuccess({
-    //                         selections: res.selections.map(
-    //                             (s: SquareSelection) => s.square_id,
-    //                         ),
-    //                     });
-    //                 }),
-    //                 catchError((error) =>
-    //                     of(SelectionsActions.loadSelectionsFailure({ error })),
-    //                 ),
-    //             ),
-    //         ),
-    //     ),
-    // );
-
     fetchSelectedSquares$ = createEffect(() =>
         this.actions$.pipe(
             ofType(SelectionsActions.fetchSelectedSquares),
@@ -47,7 +18,7 @@ export class SelectionsEffects {
                         SelectionsActions.fetchSelectedSquaresSuccess({
                             selectedSquareIds: response.selections.map(
                                 (s) => s.square_id,
-                            ), // Extract square_id
+                            ),
                         }),
                     ),
                     catchError((error) =>
@@ -74,7 +45,11 @@ export class SelectionsEffects {
                             SelectionsActions.fetchSelectedSquares({
                                 gameId,
                                 userId,
-                            }), // Fetch latest state
+                            }),
+                            GameActions.fetchGame({
+                                userId: userId as any,
+                                gameId: gameId as any,
+                            }),
                         ]),
                         tap(() => {
                             this._store.dispatch(

@@ -1,6 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GameState } from './game.reducer';
-import { selectSelectionsState } from '../selections/selections.selectors';
 
 export const GAME_STATE_NAME = 'game';
 
@@ -37,11 +36,16 @@ export const selectGameUrl = createSelector(
     (state) => state.gameCode ?? '',
 );
 
-// export const selectGameWithSelections = createSelector(
-//     selectGameState, // Selects the current game
-//     selectSelectionsState, // Selects the selected squares
-//     (gameState, selectionState) => ({
-//         ...gameState,
-//         selectedSquares: selectionState.selectedSquareIds,
-//     }),
-// );
+export const selectGameStateData = createSelector(selectGameState, (state) => ({
+    gameId: state.gameId,
+    gameCode: state.gameCode,
+    roleId: state.roleId,
+    loading: state.loading,
+    error: state.error,
+    players: state.players,
+}));
+
+export const selectUserSelectedSquares = createSelector(
+    selectGameState,
+    (state) => state?.selections || [],
+);

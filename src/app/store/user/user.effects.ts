@@ -11,21 +11,18 @@ export class UserEffects {
     createUser$ = createEffect(() =>
         this.actions$.pipe(
             ofType(UserActions.createUser),
-            withLatestFrom(this.store.select(selectGameId)), // Get latest gameId from store
-            switchMap(([{ username, password }, gameId]) =>
+            switchMap(({ username, password, gameId }) =>
                 this.gameService
-                    .createUser(username, password, gameId || '')
+                    .createUser(username, password, gameId) // gameId is already provided
                     .pipe(
-                        // Pass '' if gameId is missing
-                        switchMap((response) => {
-                            return [
-                                UserActions.createUserSuccess({
-                                    userId: response?.userId,
-                                    username: response?.username,
-                                    roleId: response?.roleId ?? 2,
-                                }),
-                            ];
-                        }),
+                        switchMap((response) => [
+                            UserActions.createUserSuccess({
+                                userId: response?.userId,
+                                username: response?.username,
+                                roleId: response?.roleId ?? 2,
+                                gameId: response?.gameId || null, // Ensure gameId is included if available
+                            }),
+                        ]),
                         catchError((error) => {
                             const errorMessage =
                                 error?.error?.message ||

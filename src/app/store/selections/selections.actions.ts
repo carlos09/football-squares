@@ -58,3 +58,7 @@ export const updateSelectedSquares = createAction(
 export const checkForHasChanges = createAction(
     '[Selections Component] Check for Has Changes in Fetched Squares & Squares Selected',
 );
+
+export const clearSelections = createAction(
+    '[Selections Component] Clear Square Selections',
+);
