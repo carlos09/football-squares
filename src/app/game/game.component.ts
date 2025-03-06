@@ -31,7 +31,6 @@ import * as UserActions from '../store/user/user.actions';
 import * as GameActions from '../store/game/game.actions';
 import * as selectionActions from '../store/selections/selections.actions';
 import { Game } from '../models/game.model';
-import { Player } from '../models/player.model';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import {
     selectGameId,
@@ -58,6 +57,9 @@ export class GameComponent implements OnInit, OnDestroy {
     gameState$: Observable<any>;
     isGameAdmin = false;
     role = Role;
+    xAxisNumbers = Array(10).fill(null);
+    yAxisNumbers = Array(10).fill(null);
+    generated = false;
 
     private subscriptions = new Set<Subscription>();
 
@@ -94,27 +96,21 @@ export class GameComponent implements OnInit, OnDestroy {
         );
 
         if (!this.userId) {
-            console.log('No userId found, opening create user dialog');
             this.openCreateUserDialog();
         } else {
-            console.log('UserId found in local storage:', this.userId);
             this.store.dispatch(UserActions.fetchUser({ userId: this.userId }));
         }
 
         if (this.gameId && this.userId) {
-            console.log('GameId found in local storage:', this.gameId);
             this.getGameDetails();
         } else {
-            console.log('gameCodeVar: ', gameCodeVar);
             if (gameCodeVar) {
                 this.store.dispatch(
                     GameActions.getGameId({ gameCode: gameCodeVar as any }),
                 );
             }
-            console.log('No gameId found in local storage.');
         }
 
-        // Update userId when fetched from store
         this.subscriptions.add(
             this.store
                 .select(selectUserId)
@@ -123,12 +119,10 @@ export class GameComponent implements OnInit, OnDestroy {
                     take(1),
                 )
                 .subscribe((userId) => {
-                    console.log('Updated userId from store:', userId);
                     this.userId = userId;
                 }),
         );
 
-        // Update gameId when fetched from store
         this.subscriptions.add(
             this.store
                 .select(selectGameId)
@@ -137,7 +131,6 @@ export class GameComponent implements OnInit, OnDestroy {
                     take(1),
                 )
                 .subscribe((gameId) => {
-                    console.log('Updated gameId from store:', gameId);
                     this.gameId = gameId;
                     localStorage.setItem('gameId', gameId);
                 }),
@@ -166,23 +159,19 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     getGameInfo(gameCode: string) {
-        console.log('this.gameId before fetch: ', this.gameId);
-
         this.store
             .select(selectUserAndCurrentGame(gameCode))
             .pipe(
-                filter(({ userId, currentGame }) => !!userId && !!currentGame), // ✅ Check `userId` directly
+                filter(({ userId, currentGame }) => !!userId && !!currentGame),
                 take(1),
             )
             .subscribe(({ userId, currentGame }) => {
-                // ✅ Destructure updated properties
                 console.log('Fetched userId: ', userId);
                 console.log('Fetched current game: ', currentGame);
                 this.gameId = currentGame?.id as any;
                 localStorage.setItem('gameId', this.gameId as any);
 
-                this.userId = userId || localStorage.getItem('userId'); // ✅ Direct access to `userId`
-                // this.user = username; // ✅ Direct access to `username`
+                this.userId = userId || localStorage.getItem('userId');
                 this.game = currentGame;
                 // this.gameId = currentGame?.id;
 
@@ -193,7 +182,6 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     loadSelections() {
-        console.log('DO LOAD SELECTIONS!!!');
         if (!this.userId || !this.gameId) {
             console.warn('Skipping loadSelections: Missing userId or gameId');
             return;
@@ -211,8 +199,8 @@ export class GameComponent implements OnInit, OnDestroy {
         console.log('gameId to pass to create user: ', this.gameId);
         const dialogRef = this.dialog.open(CreateUserDialogComponent, {
             width: '400px',
-            disableClose: true, // Prevent closing without creating a user
-            data: { gameId: this.gameId }, // Pass gameId to the dialog
+            disableClose: true,
+            data: { gameId: this.gameId },
         });
 
         dialogRef.afterClosed().subscribe((userId) => {
@@ -230,7 +218,6 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     updateSelectedCount(squareIds: number[]) {
-        console.log('square ids emitted: ', squareIds);
         this.store.dispatch(
             updateSelectedSquares({ selectedSquareIds: squareIds }),
         );
@@ -241,7 +228,7 @@ export class GameComponent implements OnInit, OnDestroy {
             .pipe(
                 take(1),
                 switchMap((selectedSquareIds) => {
-                    if (selectedSquareIds.length === 0) return EMPTY; // Don't proceed if no squares are selected
+                    if (selectedSquareIds.length === 0) return EMPTY;
 
                     const dialogRef = this.dialog.open(ConfrimDialogComponent, {
                         data: {
@@ -252,7 +239,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
                     return dialogRef.afterClosed().pipe(
                         take(1),
-                        filter((confirmed) => confirmed), // Proceed only if confirmed
+                        filter((confirmed) => confirmed),
                         map(() => selectedSquareIds),
                     );
                 }),
@@ -261,8 +248,8 @@ export class GameComponent implements OnInit, OnDestroy {
                 console.log('userId: ', this.userId);
                 this.store.dispatch(
                     saveSelectedSquares({
-                        gameId: this.gameId, // Ensure gameId is available
-                        userId: this.userId as any, // Ensure user is set correctly
+                        gameId: this.gameId,
+                        userId: this.userId as any,
                         selectedSquareIds,
                     }),
                 );
@@ -270,17 +257,25 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     togglePaymentStatus(player: any, hasPaid: boolean) {
-        console.log('player: p, ', player);
-        console.log('hasPaid: ', hasPaid);
-        // if (!this.isGameAdmin) return; // Only allow game admin to toggle
-        // player.hasPaid = !player.hasPaid;
         this.store.dispatch(
             GameActions.updatePlayerPaymentStatus({
                 userId: player.userId,
                 hasPaid,
             }),
         );
+    }
 
-        // this.gameService.updatePlayerPaymentStatus(player.id, player.hasPaid).subscribe();
+    generateAxisNumbers(): void {
+        this.xAxisNumbers = this.shuffleArray(
+            Array.from({ length: 10 }, (_, i) => i + 1),
+        );
+        this.yAxisNumbers = this.shuffleArray(
+            Array.from({ length: 10 }, (_, i) => i + 1),
+        );
+        this.generated = true;
+    }
+
+    shuffleArray(array: number[]): number[] {
+        return array.sort(() => Math.random() - 0.5);
     }
 }

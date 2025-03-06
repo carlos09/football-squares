@@ -1,19 +1,70 @@
-<div class="grid grid-cols-10 gap-2 max-w-screen-md w-full">
-    <div
-        class="grid-item flex items-center justify-center aspect-square text-sm cursor-pointer transition-transform duration-200 ease-in-out rounded-md border border-slate-400"
-        *ngFor="let num of numbers"
-        (click)="toggleSquare(num)"
-        [class.bg-blue-500]="selectedSquares.includes(num)"
-        [class.bg-gray-300]="isTaken(num) && !selectedSquares.includes(num)"
-        [class.cursor-not-allowed]="isTaken(num)"
-        [class.hover:scale-105]="!isTaken(num)"
-        [class.hover:shadow-lg]="!isTaken(num)"
+<div class="flex flex-col items-center p-4">
+    <!-- <button
+        (click)="generateAxisNumbers()"
+        class="mb-4 px-4 py-2 bg-green-500 text-white rounded"
     >
-        <lucide-icon
-            *ngIf="isTaken(num)"
-            class="w-8 h-8 text-gray-400"
-            name="user-round"
-        ></lucide-icon>
-        {{ num }}
+        Generate Numbers
+    </button> -->
+
+    <div class="grid grid-cols-11 gap-2 max-w-screen-lg w-full">
+        <!-- Top-left empty cell (Corner) -->
+        <div class="w-auto h-10"></div>
+
+        <!-- X-Axis Numbers -->
+        <div
+            *ngFor="let xNum of xAxisNumbers"
+            class="w-auto h-10 flex items-center justify-center font-bold text-gray-700"
+        >
+            <div
+                class="w-8 h-8 flex items-center justify-center border-2 border-gray-500 rounded-full"
+            >
+                <lucide-icon
+                    *ngIf="!generated"
+                    name="loader"
+                    class="w-6 h-6 text-gray-400"
+                ></lucide-icon>
+                <span *ngIf="generated">{{ xNum }}</span>
+            </div>
+        </div>
+
+        <!-- Grid Rows -->
+        <ng-container *ngFor="let row of numbers; let i = index">
+            <!-- Y-Axis Number -->
+            <div
+                class="w-auto h-12 flex items-center justify-center font-bold text-gray-700"
+            >
+                <div
+                    class="w-8 h-8 flex items-center justify-center border-2 border-gray-500 rounded-full"
+                >
+                    <lucide-icon
+                        *ngIf="!generated"
+                        name="loader"
+                        class="w-6 h-6 text-gray-400"
+                    ></lucide-icon>
+                    <span *ngIf="generated">{{ yAxisNumbers[i] }}</span>
+                </div>
+            </div>
+
+            <!-- Playable Squares -->
+            <div
+                *ngFor="let num of row"
+                class="grid-item flex items-center justify-center w-auto h-14 text-sm cursor-pointer transition-transform duration-200 ease-in-out rounded-md border border-slate-400"
+                (click)="toggleSquare(num)"
+                [class.bg-blue-500]="selectedSquares.includes(num)"
+                [class.bg-gray-300]="
+                    isTaken(num) && !selectedSquares.includes(num)
+                "
+                [class.cursor-not-allowed]="isTaken(num)"
+                [class.hover:scale-105]="!isTaken(num)"
+                [class.hover:shadow-lg]="!isTaken(num)"
+            >
+                <lucide-icon
+                    *ngIf="isTaken(num)"
+                    class="w-8 h-8 text-gray-400"
+                    name="user-round"
+                ></lucide-icon>
+                {{ num }}
+            </div>
+        </ng-container>
     </div>
 </div>

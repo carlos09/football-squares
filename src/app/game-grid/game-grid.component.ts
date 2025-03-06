@@ -10,11 +10,24 @@ import { SquareSelection } from '../models/square-selection.model';
 export class GameGridComponent {
     @Input() selectedSquares: number[] = [];
     @Input() takenSquares: SquareSelection[] = [];
+    @Input() xAxisNumbers: number[] = [];
+    @Input() yAxisNumbers: number[] = [];
+    @Input() generated: boolean = false;
     @Output() selectionChanged = new EventEmitter<number[]>();
-    numbers = Array.from({ length: 100 }, (_, i) => i + 1);
+    @Output() generateNumbers = new EventEmitter<void>();
+    numbers: number[][] = [];
+
+    constructor() {
+        this.initializeGrid();
+    }
+
+    initializeGrid() {
+        this.numbers = Array.from({ length: 10 }, (_, row) =>
+            Array.from({ length: 10 }, (_, col) => row * 10 + col + 1),
+        );
+    }
 
     toggleSquare(num: number) {
-        console.log('this.selectedSquares: ', this.selectedSquares);
         if (this.isTaken(num)) return;
 
         const updatedSelection = this.selectedSquares.includes(num)
@@ -25,15 +38,12 @@ export class GameGridComponent {
     }
 
     isTaken(num: number): boolean {
-        if (this.selectedSquares.includes(num)) {
-            this.takenSquares = this.takenSquares.filter(
-                (s) => s.squareId !== num,
-            );
-            return false;
-        }
-
         return this.takenSquares.some(
             (selection) => selection.squareId === num,
         );
+    }
+
+    requestNumberGeneration() {
+        this.generateNumbers.emit();
     }
 }

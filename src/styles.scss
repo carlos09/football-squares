@@ -6,7 +6,7 @@ body {
 }
 body {
     margin: 0;
-    font-family: Roboto, 'Helvetica Neue', sans-serif;
+    font-family: Inter, 'Helvetica Neue', sans-serif;
 }
 
 .mdc-notched-outline__notch {
@@ -17,23 +17,28 @@ body {
     line-height: normal;
 }
 
-/* Color Theme Swatches in Hex */
-$Football-Field--1-hex: #232607;
-$Football-Field--2-hex: #272e0c;
-$Football-Field--3-hex: #f2be5c;
-$Football-Field--4-hex: #f2e9d8;
-$Football-Field--5-hex: #a65a49;
+@theme {
+    --color-dark-green: #232607;
+    --color-green: #272e0c;
+    --color-yellow: #f2be5c;
+    --color-tan: #f2e9d8;
+    --color-redish: #a65a49;
+}
 
-/* Color Theme Swatches in RGBA */
-$Football-Field--1-rgba: rgba(35, 38, 7, 1);
-$Football-Field--2-rgba: rgba(38, 45, 11, 1);
-$Football-Field--3-rgba: rgba(242, 189, 91, 1);
-$Football-Field--4-rgba: rgba(242, 232, 216, 1);
-$Football-Field--5-rgba: rgba(165, 89, 73, 1);
+/* Define Custom Theme Colors */
+@theme {
+    --color-dark-green: #232607;
+    --color-green: #272e0c;
+    --color-yellow: #f2be5c;
+    --color-tan: #f2e9d8;
+    --color-redish: #a65a49;
+}
 
-/* Color Theme Swatches in HSLA */
-$Football-Field--1-hsla: hsla(65, 68, 8, 1);
-$Football-Field--2-hsla: hsla(72, 58, 11, 1);
-$Football-Field--3-hsla: hsla(39, 85, 65, 1);
-$Football-Field--4-hsla: hsla(39, 50, 89, 1);
-$Football-Field--5-hsla: hsla(10, 38, 46, 1);
+/* Make Colors Accessible in Tailwind Utility Classes */
+:root {
+    --tw-color-dark-green: var(--color-dark-green);
+    --tw-color-green: var(--color-green);
+    --tw-color-yellow: var(--color-yellow);
+    --tw-color-tan: var(--color-tan);
+    --tw-color-redish: var(--color-redish);
+}

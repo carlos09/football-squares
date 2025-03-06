@@ -1,10 +1,14 @@
 <app-header></app-header>
-<div class="max-w-[1400px] mx-auto p-4">
-    <div class="grid grid-cols-3 gap-4">
-        <div class="col-span-2">
-            <div class="bg-white shadow-lg rounded-lg w-full">
-                <h1>Username: {{ user$ | async }}</h1>
+<div class="mx-auto p-4">
+    <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-8">
+            <div
+                class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full"
+            >
                 <app-game-grid
+                    [xAxisNumbers]="xAxisNumbers"
+                    [yAxisNumbers]="yAxisNumbers"
+                    [generated]="generated"
                     [selectedSquares]="(selectedSquares$ | async) ?? []"
                     [takenSquares]="(gameUserSelections$ | async) ?? []"
                     (selectionChanged)="updateSelectedCount($event)"
@@ -18,6 +22,20 @@
                         (selectedSquares$ | async)?.length || 0
                     }})
                 </button>
+
+                <button
+                    (click)="generateAxisNumbers()"
+                    class="mb-4 px-4 py-2 bg-green-500 text-white rounded"
+                >
+                    Generate Numbers
+                </button>
+            </div>
+        </div>
+        <div class="col-span-4">
+            <div
+                class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6"
+            >
+                <app-game-settings></app-game-settings>
             </div>
         </div>
         <div class="hidden">
@@ -65,73 +83,3 @@
         </div>
     </div>
 </div>
-
-<!-- <main class="flex items-center justify-center min-h-screen bg-gray-100"> -->
-<!-- <div
-        class="bg-white shadow-lg rounded-lg p-6 min-w-[820px] max-w-4xl w-full"
-    >
-        <h1>Username: {{ user$ | async }}</h1>
-        <app-game-grid
-            [selectedSquares]="(selectedSquares$ | async) ?? []"
-            [takenSquares]="(gameUserSelections$ | async) ?? []"
-            (selectionChanged)="updateSelectedCount($event)"
-        ></app-game-grid>
-        <button
-            (click)="finishSelection()"
-            [disabled]="!(hasChanges$ | async)"
-            class="mt-4 px-4 py-2 bg-green-600 text-white rounded-md"
-        >
-            Finished selecting my squares ({{
-                (selectedSquares$ | async)?.length || 0
-            }})
-        </button>
-    </div> -->
-
-<!-- <div class="p-6 bg-white shadow-lg rounded-lg">
-        <h2 class="text-xl font-bold">Players</h2>
-
-        <ul>
-            <li *ngFor="let player of (gameState$ | async)?.players">
-                <div class="flex justify-between items-center p-2 border-b">
-                    <span>
-                        {{ player.username }}
-                        <span
-                            *ngIf="player.roleId === role.GameAdmin"
-                            class="text-sm text-green-600"
-                        >
-                            (Game Admin)
-                        </span>
-                    </span>
-
-                    <span
-                        *ngIf="(gameState$ | async)?.roleId === role.GameAdmin"
-                    >
-                        <mat-slide-toggle
-                            [checked]="player.hasPaid"
-                            (change)="
-                                togglePaymentStatus(player, $event.checked)
-                            "
-                            color="primary"
-                        >
-                            Paid
-                        </mat-slide-toggle>
-                    </span>
-                </div>
-            </li>
-        </ul>
-    </div> -->
-
-<!-- <p>Game ID: {{ (gameState$ | async)?.gameId }}</p>
-    <p>Game Code: {{ (gameState$ | async)?.gameCode }}</p>
-    <p>Role ID: {{ (gameState$ | async)?.roleId }}</p>
-    <p *ngIf="(gameState$ | async)?.loading">Loading...</p>
-    <p *ngIf="(gameState$ | async)?.error">
-        Error: {{ (gameState$ | async)?.error }}
-    </p>
-
-    <ul>
-        <li *ngFor="let player of (gameState$ | async)?.players">
-            {{ player.name }} ({{ player.status }})
-        </li>
-    </ul> -->
-<!-- </main> -->
