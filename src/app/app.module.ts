@@ -24,6 +24,15 @@ import { GameComponent } from './game/game.component';
 import { LandingComponent } from './landing/landing.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { HeaderComponent } from './header/header.component';
+import {
+    LucideAngularModule,
+    File,
+    Home,
+    Menu,
+    UserCheck,
+    CircleUserRound,
+    UserRound,
+} from 'lucide-angular';
 
 @NgModule({
     declarations: [
@@ -52,6 +61,14 @@ import { HeaderComponent } from './header/header.component';
         StoreDevtoolsModule.instrument({
             maxAge: 25,
             logOnly: environment.production,
+        }),
+        LucideAngularModule.pick({
+            File,
+            Home,
+            Menu,
+            UserCheck,
+            CircleUserRound,
+            UserRound,
         }),
     ],
     providers: [provideAnimationsAsync()],

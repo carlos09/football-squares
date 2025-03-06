@@ -1,3 +1,17 @@
-<div class="w-full bg-gray-100 text-white p-6 text-center">
-    <img src="assets/images/squares_logo.jpg" alt="Squares Logo" />
+<div
+    class="w-full bg-[var(--tw-color-redish)] text-white p-3 text-center flex items-center justify-between"
+>
+    <img
+        src="assets/images/squares_logo.png"
+        width="220"
+        height="42"
+        alt="Squares Logo"
+    />
+    <div class="login text-center flex flex-col items-center">
+        <lucide-icon
+            class="w-8 h-8 text-[var(--color-tan)]"
+            name="circle-user-round"
+        ></lucide-icon>
+        <div class="text-sm mt-1">{{ user$ | async }}</div>
+    </div>
 </div>
