@@ -52,6 +52,5 @@ export const selectUserSelectedSquares = createSelector(
 );
 
 export const selectGameSettings = createSelector(selectGameState, (state) => {
-    console.log('state.settings: ', state.settings);
     return state.settings;
 });
