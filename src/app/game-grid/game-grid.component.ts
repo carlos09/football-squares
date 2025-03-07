@@ -1,5 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SquareSelection } from '../models/square-selection.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '../store/app.state';
+import { Observable } from 'rxjs';
+import { selectGameSettings } from '../store/game/game.seletors';
 
 @Component({
     selector: 'app-game-grid',
@@ -7,7 +11,7 @@ import { SquareSelection } from '../models/square-selection.model';
     templateUrl: './game-grid.component.html',
     styleUrl: './game-grid.component.scss',
 })
-export class GameGridComponent {
+export class GameGridComponent implements OnInit {
     @Input() selectedSquares: number[] = [];
     @Input() takenSquares: SquareSelection[] = [];
     @Input() xAxisNumbers: number[] = [];
@@ -16,8 +20,20 @@ export class GameGridComponent {
     @Output() selectionChanged = new EventEmitter<number[]>();
     @Output() generateNumbers = new EventEmitter<void>();
     numbers: number[][] = [];
+    settings$: Observable<any>;
+    homeTeam = '';
+    awayTeam = '';
 
-    constructor() {
+    constructor(private store: Store<AppState>) {}
+
+    ngOnInit(): void {
+        this.store.select(selectGameSettings).subscribe((settings) => {
+            if (settings.homeTeam) {
+                console.log('in here with: ', settings);
+                this.homeTeam = settings?.homeTeam.toLowerCase();
+                this.awayTeam = settings?.awayTeam.toLowerCase();
+            }
+        });
         this.initializeGrid();
     }
 

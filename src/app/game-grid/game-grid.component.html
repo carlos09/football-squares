@@ -1,12 +1,29 @@
 <div class="flex flex-col items-center p-4">
-    <!-- <button
-        (click)="generateAxisNumbers()"
-        class="mb-4 px-4 py-2 bg-green-500 text-white rounded"
-    >
-        Generate Numbers
-    </button> -->
+    <!-- X-Axis Label -->
+    <div class="text-lg font-bold text-gray-700 mb-2">
+        <img
+            *ngIf="homeTeam"
+            height="120"
+            width="60"
+            [src]="'assets/images/teams/' + homeTeam + '.png'"
+        />
+    </div>
 
-    <div class="grid grid-cols-11 gap-2 max-w-screen-lg w-full">
+    <div
+        class="grid grid-cols-[auto_repeat(10,_1fr)] gap-2 max-w-screen-lg w-full relative"
+    >
+        <!-- Y-Axis Label -->
+        <div
+            class="absolute -left-12 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-700 rotate-[-90deg]"
+        >
+            <img
+                *ngIf="awayTeam"
+                height="120"
+                width="60"
+                [src]="'assets/images/teams/' + awayTeam + '.png'"
+            />
+        </div>
+
         <!-- Top-left empty cell (Corner) -->
         <div class="w-auto h-10"></div>
 
@@ -31,7 +48,7 @@
         <ng-container *ngFor="let row of numbers; let i = index">
             <!-- Y-Axis Number -->
             <div
-                class="w-auto h-12 flex items-center justify-center font-bold text-gray-700"
+                class="w-auto h-12 flex items-center justify-center font-bold text-gray-700 px-2"
             >
                 <div
                     class="w-8 h-8 flex items-center justify-center border-2 border-gray-500 rounded-full"

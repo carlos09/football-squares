@@ -34,6 +34,7 @@ import { Game } from '../models/game.model';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import {
     selectGameId,
+    selectGameSettings,
     selectGameStateData,
     selectUserSelectedSquares,
 } from '../store/game/game.seletors';
@@ -267,15 +268,31 @@ export class GameComponent implements OnInit, OnDestroy {
 
     generateAxisNumbers(): void {
         this.xAxisNumbers = this.shuffleArray(
-            Array.from({ length: 10 }, (_, i) => i + 1),
+            Array.from({ length: 10 }, (_, i) => i),
         );
         this.yAxisNumbers = this.shuffleArray(
-            Array.from({ length: 10 }, (_, i) => i + 1),
+            Array.from({ length: 10 }, (_, i) => i),
         );
         this.generated = true;
     }
 
+    // Utility function to shuffle an array using Fisher-Yates algorithm
     shuffleArray(array: number[]): number[] {
-        return array.sort(() => Math.random() - 0.5);
+        return array
+            .map((value) => ({ value, sort: Math.random() })) // Assign a random sort key
+            .sort((a, b) => a.sort - b.sort) // Sort based on the random key
+            .map(({ value }) => value); // Extract the shuffled values
+    }
+
+    gameSettingsSave(settings: any) {
+        console.log('dispatch action!:', settings);
+        this.store.dispatch(
+            GameActions.saveGameSettings({
+                gameId: this.gameId as any,
+                homeTeam: settings.homeTeam,
+                awayTeam: settings.awayTeam,
+                pricePerSquare: settings.squarePrice,
+            }),
+        );
     }
 }

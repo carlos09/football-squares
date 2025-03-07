@@ -43,9 +43,15 @@ export const selectGameStateData = createSelector(selectGameState, (state) => ({
     loading: state.loading,
     error: state.error,
     players: state.players,
+    settings: state.settings,
 }));
 
 export const selectUserSelectedSquares = createSelector(
     selectGameState,
     (state) => state?.selections || [],
 );
+
+export const selectGameSettings = createSelector(selectGameState, (state) => {
+    console.log('state.settings: ', state.settings);
+    return state.settings;
+});

@@ -197,7 +197,7 @@ app.get('/api/game/:gameCode', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'SELECT id FROM games WHERE game_code = $1',
+            'SELECT id, saved_settings FROM games WHERE game_code = $1',
             [gameCode],
         );
 
@@ -205,9 +205,37 @@ app.get('/api/game/:gameCode', async (req, res) => {
             return res.status(404).json({ error: 'Game not found' });
         }
 
-        res.json({ gameId: result.rows[0].id });
+        res.json(result.rows[0]); // Return id and saved_settings
     } catch (err) {
         console.error(`Error in /api/game/:gameCode:`, err);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
+// Saving Game Settings
+app.post('/api/game/:gameId/settings', async (req, res) => {
+    const { gameId } = req.params;
+    const { settings } = req.body;
+
+    console.log(`Request save Game for ${gameId} with:`, settings);
+
+    if (!settings || typeof settings !== 'object') {
+        return res.status(400).json({ error: 'Invalid settings format' });
+    }
+
+    try {
+        const result = await pool.query(
+            'UPDATE games SET saved_settings = $1 WHERE id = $2 RETURNING saved_settings',
+            [settings, gameId],
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json({ settings: result.rows[0].saved_settings });
+    } catch (err) {
+        console.error(`Error updating settings for game ${gameId}:`, err);
         res.status(500).json({ error: 'An error occurred' });
     }
 });
@@ -469,9 +497,9 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             gameId,
         });
 
-        // Fetch game details
+        // Fetch game details including saved_settings
         const gameResult = await pool.query(
-            `SELECT id, game_code FROM games WHERE id = $1`,
+            `SELECT id, game_code, saved_settings FROM games WHERE id = $1`,
             [gameId],
         );
 
@@ -508,12 +536,13 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             toCamelCase({
                 gameId: gameResult.rows[0].id,
                 gameCode: gameResult.rows[0].game_code,
+                settings: gameResult.rows[0].saved_settings ?? {}, // Ensure it's an object or empty
                 roleId: userRoleResult.rows[0].role_id,
                 players: playersResult.rows.map((player) => ({
                     userId: player.user_id,
                     username: player.username,
                     roleId: player.role_id,
-                    hasPaid: player.has_paid ?? false,
+                    hasPaid: player.has_paid ?? 0,
                 })),
                 selections: selectionsResult.rows.map((selection) => ({
                     squareId: selection.square_id,

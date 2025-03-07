@@ -10,4 +10,9 @@ export interface Game {
     roleId: number;
     players: Player[];
     selections: SquareSelection[];
+    settings: {
+        homeTeam: string;
+        awayTeam: string;
+        pricePerSquare: number;
+    };
 }

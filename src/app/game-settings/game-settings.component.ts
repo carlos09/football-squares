@@ -1,5 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Team } from '../models/teams.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '../store/app.state';
+import { selectGameSettings } from '../store/game/game.seletors';
+import { filter, Observable } from 'rxjs';
 
 @Component({
     selector: 'app-game-settings',
@@ -8,12 +12,30 @@ import { Team } from '../models/teams.model';
     styleUrl: './game-settings.component.scss',
 })
 export class GameSettingsComponent implements OnInit {
-    nflTeams = TEAMS as Team[]; // Type assertion since it's imported as a module
+    nflTeams = TEAMS as Team[];
+    homeTeam: string = '';
+    awayTeam: string = '';
+    squarePrice: number = 0;
+    settings$: Observable<any>;
+    @Output() gameSettings = new EventEmitter();
 
-    constructor() {}
+    constructor(private store: Store<AppState>) {}
 
     ngOnInit(): void {
-        console.log('teams: ', this.nflTeams); // Use the teams array
+        this.store.select(selectGameSettings).subscribe((settings) => {
+            this.homeTeam = settings.homeTeam || '';
+            this.awayTeam = settings.awayTeam || '';
+            this.squarePrice = settings.pricePerSquare ?? 0;
+        });
+    }
+    onSubmit(): void {
+        const savedSettings = {
+            homeTeam: this.homeTeam,
+            awayTeam: this.awayTeam,
+            squarePrice: this.squarePrice,
+        };
+        this.gameSettings.emit(savedSettings);
+        console.log('savedSettings: ', savedSettings);
     }
 }
 
@@ -125,9 +147,30 @@ export const TEAMS = [
     },
     {
         city: 'Kansas City',
-        name: 'Chiefts',
+        name: 'Chiefs',
         abr: 'KC',
         conf: 'AFC',
+        div: 'West',
+    },
+    {
+        city: 'Las Vegas',
+        name: 'Raiders',
+        abr: 'LV',
+        conf: 'AFC',
+        div: 'West',
+    },
+    {
+        city: 'Los Angeles',
+        name: 'Chargers',
+        abr: 'LAC',
+        conf: 'AFC',
+        div: 'West',
+    },
+    {
+        city: 'Los Angeles',
+        name: 'Rams',
+        abr: 'LAR',
+        conf: 'NFC',
         div: 'West',
     },
     {
@@ -173,13 +216,6 @@ export const TEAMS = [
         div: 'East',
     },
     {
-        city: 'Oakland',
-        name: 'Raiders',
-        abr: 'OAK',
-        conf: 'AFC',
-        div: 'West',
-    },
-    {
         city: 'Philidelphia',
         name: 'Eagles',
         abr: 'PHI',
@@ -194,13 +230,6 @@ export const TEAMS = [
         div: 'North',
     },
     {
-        city: 'San Diego',
-        name: 'Chargers',
-        abr: 'SD',
-        conf: 'AFC',
-        div: 'West',
-    },
-    {
         city: 'Seattle',
         name: 'Seahawks',
         abr: 'SEA',
@@ -211,13 +240,6 @@ export const TEAMS = [
         city: 'San Francisco',
         name: '49ers',
         abr: 'SF',
-        conf: 'NFC',
-        div: 'West',
-    },
-    {
-        city: 'St. Louis',
-        name: 'Rams',
-        abr: 'STL',
         conf: 'NFC',
         div: 'West',
     },
@@ -237,7 +259,7 @@ export const TEAMS = [
     },
     {
         city: 'Washington',
-        name: 'Redskins',
+        name: 'Commanders',
         abr: 'WAS',
         conf: 'NFC',
         div: 'East',

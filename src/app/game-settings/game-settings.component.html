@@ -1,7 +1,7 @@
 <div class="max-w-4xl mx-auto p-6">
     <h2 class="text-2xl font-semibold mb-6">Game Settings</h2>
 
-    <form class="space-y-4">
+    <form class="space-y-4" (ngSubmit)="onSubmit()">
         <!-- Home Team Select -->
         <div class="flex flex-col">
             <label for="homeTeam" class="text-lg font-medium text-gray-700"
@@ -10,10 +10,12 @@
             <select
                 id="homeTeam"
                 name="homeTeam"
+                [(ngModel)]="homeTeam"
                 class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                required
             >
                 <option value="" disabled selected>Select Home Team</option>
-                <option *ngFor="let team of nflTeams" [value]="team.abr">
+                <option *ngFor="let team of nflTeams" [value]="team.name">
                     {{ team.city }} {{ team.name }}
                 </option>
             </select>
@@ -27,10 +29,12 @@
             <select
                 id="awayTeam"
                 name="awayTeam"
+                [(ngModel)]="awayTeam"
                 class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                required
             >
                 <option value="" disabled selected>Select Away Team</option>
-                <option *ngFor="let team of nflTeams" [value]="team.abr">
+                <option *ngFor="let team of nflTeams" [value]="team.name">
                     {{ team.city }} {{ team.name }}
                 </option>
             </select>
@@ -45,8 +49,10 @@
                 type="number"
                 id="squarePrice"
                 name="squarePrice"
+                [(ngModel)]="squarePrice"
                 placeholder="Enter price per square"
                 class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                required
             />
         </div>
 

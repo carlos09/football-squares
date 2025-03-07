@@ -115,3 +115,32 @@ export const updatePlayerPaymentFailure = createAction(
     '[Game API] Update Player Payment Status Failure',
     props<{ error: any }>(),
 );
+
+export const saveGameSettings = createAction(
+    '[Game Component] Save Game Settings',
+    props<{
+        gameId: string;
+        homeTeam: string;
+        awayTeam: string;
+        pricePerSquare: number;
+    }>(),
+);
+
+export const saveGameSettingsSuccess = createAction(
+    '[Game API] Save Game Settings Success',
+    props<{
+        homeTeam: string;
+        awayTeam: string;
+        pricePerSquare: number;
+    }>(),
+);
+
+export const saveGameSettingsFailure = createAction(
+    '[Game API] Save Game Settings Failure',
+    props<{ error: string }>(),
+);
+
+export const generateSquaresNumbers = createAction(
+    '[Game Component] Square Numbers Generated',
+    props<{ haveNumbersBeenGenerated: boolean }>(),
+);

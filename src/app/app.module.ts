@@ -52,6 +52,7 @@ import { CommonModule } from '@angular/common';
     imports: [
         BrowserModule,
         CommonModule,
+        FormsModule,
         AppRoutingModule,
         HttpClientModule,
         MatDialogModule,

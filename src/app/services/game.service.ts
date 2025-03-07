@@ -56,6 +56,7 @@ export class GameService {
     }
 
     getGame(userId: string, gameId: string): Observable<Game> {
+        console.log('**** GET GAME');
         return this.http.get<Game>(
             `${this.baseUrl}/api/game/${gameId}/user/${userId}`,
         );
@@ -120,6 +121,12 @@ export class GameService {
                 hasPaid,
             },
         );
+    }
+
+    saveGameSettings(gameId: string, settings: any): Observable<any> {
+        return this.http.post(`${this.baseUrl}/api/game/${gameId}/settings`, {
+            settings,
+        });
     }
 
     // getSelectedSquares(gameId: string | null): Observable<any> {

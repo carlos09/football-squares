@@ -9,6 +9,12 @@ export interface GameState {
     roleId: number | null;
     players: Player[];
     selections: SquareSelection[];
+    settings: {
+        homeTeam: string;
+        awayTeam: string;
+        pricePerSquare: number;
+    };
+    haveNumbersBeenGenerated: boolean;
     loading: boolean;
     error: any;
 }
@@ -19,6 +25,12 @@ export const initialState: GameState = {
     roleId: null,
     players: [],
     selections: [],
+    settings: {
+        homeTeam: '',
+        awayTeam: '',
+        pricePerSquare: 0,
+    },
+    haveNumbersBeenGenerated: false,
     loading: false,
     error: null,
 };
@@ -26,22 +38,21 @@ export const initialState: GameState = {
 export const gameReducer = createReducer(
     initialState,
 
-    on(GameActions.generateGameCode, (state) => ({
-        ...state,
-        loading: true,
-        error: null,
-    })),
+    on(
+        GameActions.generateGameCode,
+        GameActions.createGame,
+        GameActions.saveGameSettings,
+        (state) => ({
+            ...state,
+            loading: true,
+            error: null,
+        }),
+    ),
 
     on(GameActions.generateGameCodeSuccess, (state, { gameCode }) => ({
         ...state,
         gameCode,
         loading: false, // Fix: should be false after success
-        error: null,
-    })),
-
-    on(GameActions.createGame, (state) => ({
-        ...state,
-        loading: true,
         error: null,
     })),
 
@@ -55,13 +66,6 @@ export const gameReducer = createReducer(
             loading: false,
         }),
     ),
-
-    on(GameActions.createGameFailure, (state, { error }) => ({
-        ...state,
-        error,
-        loading: false,
-    })),
-
     on(
         GameActions.fetchGame,
         GameActions.getGameInfo,
@@ -72,20 +76,43 @@ export const gameReducer = createReducer(
         }),
     ),
 
-    on(GameActions.fetchGameSuccess, (state, { game }) => ({
-        ...state,
-        gameId: game.id,
-        gameCode: game.gameCode,
-        roleId: game.roleId,
-        players: game.players,
-        selections: game.selections,
-        loading: false,
-        error: null,
-    })),
+    on(GameActions.fetchGameSuccess, (state, { game }) => {
+        console.log('game: ', game.settings);
+        return {
+            ...state,
+            gameId: game.id,
+            gameCode: game.gameCode,
+            roleId: game.roleId,
+            players: game.players,
+            selections: game.selections,
+            settings: {
+                homeTeam: game.settings.homeTeam,
+                awayTeam: game.settings.awayTeam,
+                pricePerSquare: game.settings.pricePerSquare,
+            },
+            loading: false,
+            error: null,
+        };
+    }),
+    on(GameActions.saveGameSettingsSuccess, (state, settings) => {
+        console.log('settings SAVE', settings);
+        return {
+            ...state,
+            settings: {
+                homeTeam: settings.homeTeam,
+                awayTeam: settings.awayTeam,
+                pricePerSquare: settings.pricePerSquare,
+            },
+            loading: false, // Fix: should be false after success
+            error: null,
+        };
+    }),
     on(
         GameActions.fetchGameFailure,
         GameActions.getGameInfoFailure,
         GameActions.getGameIdFailure,
+        GameActions.saveGameSettingsFailure,
+        GameActions.createGameFailure,
         (state, { error }) => ({
             ...state,
             loading: false,
@@ -122,6 +149,12 @@ export const gameReducer = createReducer(
         players: [],
         selections: [],
         roleId: null,
+        loading: false,
+        error: null,
+    })),
+    on(GameActions.generateSquaresNumbers, (state, action) => ({
+        ...state,
+        haveNumbersBeenGenerated: action.haveNumbersBeenGenerated,
         loading: false,
         error: null,
     })),
