@@ -15,9 +15,26 @@ export class GameSettingsComponent implements OnInit {
     nflTeams = TEAMS as Team[];
     homeTeam: string = '';
     awayTeam: string = '';
+    gameTime: string = '';
     squarePrice: number = 0;
     settings$: Observable<any>;
     @Output() gameSettings = new EventEmitter();
+
+    // NFL Game Start Times (Eastern Time)
+    // gameTimes: string[] = [
+    //     '1:00 PM',
+    //     '4:05 PM',
+    //     '4:25 PM',
+    //     '8:15 PM (Thu)',
+    //     '8:20 PM (Sun)',
+    //     '8:15 PM (Mon)',
+    //     '12:30 PM (Thanksgiving)',
+    //     '4:30 PM (Thanksgiving)',
+    //     '8:20 PM (Thanksgiving)',
+    //     '3:00 PM (AFC/NFC Championship)',
+    //     '6:30 PM (AFC/NFC Championship)',
+    //     '6:30 PM (Super Bowl)',
+    // ];
 
     constructor(private store: Store<AppState>) {}
 
@@ -25,6 +42,7 @@ export class GameSettingsComponent implements OnInit {
         this.store.select(selectGameSettings).subscribe((settings) => {
             this.homeTeam = settings.homeTeam || '';
             this.awayTeam = settings.awayTeam || '';
+            // this.gameTime = settings.gameTime || '';
             this.squarePrice = settings.pricePerSquare ?? 0;
         });
     }
@@ -32,6 +50,7 @@ export class GameSettingsComponent implements OnInit {
         const savedSettings = {
             homeTeam: this.homeTeam,
             awayTeam: this.awayTeam,
+            // gameTime: this.gameTime,
             squarePrice: this.squarePrice,
         };
         this.gameSettings.emit(savedSettings);

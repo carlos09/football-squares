@@ -16,6 +16,7 @@ import {
     filter,
     switchMap,
     EMPTY,
+    of,
 } from 'rxjs';
 import {
     selectHasChanges,
@@ -36,6 +37,7 @@ import {
     selectGameId,
     selectGameSettings,
     selectGameStateData,
+    selectHaveNumbersBeenGenerated,
     selectUserSelectedSquares,
 } from '../store/game/game.seletors';
 import { Role } from '../enums/roles.enum';
@@ -50,6 +52,7 @@ import { SquareSelection } from '../models/square-selection.model';
 export class GameComponent implements OnInit, OnDestroy {
     selectedSquares$: Observable<number[]>;
     gameUserSelections$: Observable<SquareSelection[]>;
+    numbersGenerated$: Observable<boolean> = of(false);
     gameId: string | null;
     userId: string | null = null;
     user$: Observable<string>;
@@ -60,7 +63,7 @@ export class GameComponent implements OnInit, OnDestroy {
     role = Role;
     xAxisNumbers = Array(10).fill(null);
     yAxisNumbers = Array(10).fill(null);
-    generated = false;
+    // generated = false;
 
     private subscriptions = new Set<Subscription>();
 
@@ -91,6 +94,9 @@ export class GameComponent implements OnInit, OnDestroy {
         this.user$ = this.store.select(selectUser);
         this.store.dispatch(selectionActions.checkForHasChanges());
         this.gameState$ = this.store.select(selectGameStateData);
+        this.numbersGenerated$ = this.store.select(
+            selectHaveNumbersBeenGenerated,
+        );
 
         console.log(
             `Initial state: gameId=${this.gameId}, userId=${this.userId}`,
@@ -273,7 +279,12 @@ export class GameComponent implements OnInit, OnDestroy {
         this.yAxisNumbers = this.shuffleArray(
             Array.from({ length: 10 }, (_, i) => i),
         );
-        this.generated = true;
+        // this.generated = true;
+        this.store.dispatch(
+            GameActions.generateSquaresNumbers({
+                haveNumbersBeenGenerated: true,
+            }),
+        );
     }
 
     // Utility function to shuffle an array using Fisher-Yates algorithm

@@ -56,7 +56,6 @@ export class GameService {
     }
 
     getGame(userId: string, gameId: string): Observable<Game> {
-        console.log('**** GET GAME');
         return this.http.get<Game>(
             `${this.baseUrl}/api/game/${gameId}/user/${userId}`,
         );
@@ -87,8 +86,8 @@ export class GameService {
             );
     }
 
-    getGameId(gameCode: string): Observable<{ gameId: string }> {
-        return this.http.get<{ gameId: string }>(
+    getGameId(gameCode: string): Observable<{ id: string }> {
+        return this.http.get<{ id: string }>(
             `${this.baseUrl}/api/game/${gameCode}`,
         );
     }

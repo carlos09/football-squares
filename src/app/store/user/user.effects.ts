@@ -11,9 +11,11 @@ export class UserEffects {
     createUser$ = createEffect(() =>
         this.actions$.pipe(
             ofType(UserActions.createUser),
-            switchMap(({ username, password, gameId }) =>
-                this.gameService
-                    .createUser(username, password, gameId) // gameId is already provided
+            withLatestFrom(this.store.select(selectGameId)), // Get gameId from GameState
+            switchMap(([{ username, password, gameId }, storedGameId]) => {
+                const finalGameId = gameId ?? storedGameId; // Use action-provided gameId or fallback to GameState
+                return this.gameService
+                    .createUser(username, password, finalGameId)
                     .pipe(
                         switchMap((response) => [
                             UserActions.createUserSuccess({
@@ -33,8 +35,8 @@ export class UserEffects {
                                 }),
                             );
                         }),
-                    ),
-            ),
+                    );
+            }),
         ),
     );
 

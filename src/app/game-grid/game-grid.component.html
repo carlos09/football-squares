@@ -32,12 +32,10 @@
             *ngFor="let xNum of xAxisNumbers"
             class="w-auto h-10 flex items-center justify-center font-bold text-gray-700"
         >
-            <div
-                class="w-8 h-8 flex items-center justify-center border-2 border-gray-500 rounded-full"
-            >
+            <div class="w-8 h-8 flex items-center justify-center rounded-full">
                 <lucide-icon
                     *ngIf="!generated"
-                    name="loader"
+                    name="circle-help"
                     class="w-6 h-6 text-gray-400"
                 ></lucide-icon>
                 <span *ngIf="generated">{{ xNum }}</span>
@@ -51,11 +49,11 @@
                 class="w-auto h-12 flex items-center justify-center font-bold text-gray-700 px-2"
             >
                 <div
-                    class="w-8 h-8 flex items-center justify-center border-2 border-gray-500 rounded-full"
+                    class="w-8 h-8 flex items-center justify-center rounded-full"
                 >
                     <lucide-icon
                         *ngIf="!generated"
-                        name="loader"
+                        name="circle-help"
                         class="w-6 h-6 text-gray-400"
                     ></lucide-icon>
                     <span *ngIf="generated">{{ yAxisNumbers[i] }}</span>
@@ -65,7 +63,7 @@
             <!-- Playable Squares -->
             <div
                 *ngFor="let num of row"
-                class="grid-item flex items-center justify-center w-auto h-14 text-sm cursor-pointer transition-transform duration-200 ease-in-out rounded-md border border-slate-400"
+                class="grid-item group flex items-center justify-center w-auto h-14 text-sm cursor-pointer transition-transform duration-200 ease-in-out rounded-md border border-slate-400 relative"
                 (click)="toggleSquare(num)"
                 [class.bg-blue-500]="selectedSquares.includes(num)"
                 [class.bg-gray-300]="
@@ -80,7 +78,15 @@
                     class="w-8 h-8 text-gray-400"
                     name="user-round"
                 ></lucide-icon>
-                {{ num }}
+                <!-- {{ num }} -->
+
+                <div
+                    *ngIf="isTaken(num)"
+                    class="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-500"
+                >
+                    <!-- {{ getUsernameForSquare(num) }} -->
+                    username shows
+                </div>
             </div>
         </ng-container>
     </div>

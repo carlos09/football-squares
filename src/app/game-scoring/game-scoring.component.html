@@ -1,0 +1,74 @@
+<div class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold mb-6">Game Scoring</h2>
+
+        <div
+            *ngFor="let quarter of quarters; let i = index"
+            class="mb-4 p-4 border border-gray-300 rounded-md"
+        >
+            <h3 class="text-lg font-semibold">Quarter {{ quarter }}</h3>
+
+            <!-- Prevent future quarters from being entered until the previous one is set -->
+            <div *ngIf="canShowQuarter(i)" class="mt-2 text-sm">
+                <div *ngIf="editingIndex !== i; else editMode">
+                    <strong>Saved Score:</strong>
+                    Home: {{ savedScores[i]?.home }} | Away:
+                    {{ savedScores[i]?.away }}
+                    <button
+                        (click)="editScore(i)"
+                        class="ml-4 text-blue-600 hover:underline"
+                    >
+                        Edit
+                    </button>
+                </div>
+
+                <ng-template #editMode>
+                    <div class="flex space-x-4 items-center mt-2">
+                        <!-- Home Team Score Input -->
+                        <div class="flex flex-col">
+                            <label class="text-sm font-medium text-gray-700"
+                                >Home Team</label
+                            >
+                            <input
+                                type="number"
+                                [(ngModel)]="homeScores[i]"
+                                class="p-2 border rounded-md w-20 text-center"
+                            />
+                        </div>
+
+                        <!-- Away Team Score Input -->
+                        <div class="flex flex-col">
+                            <label class="text-sm font-medium text-gray-700"
+                                >Away Team</label
+                            >
+                            <input
+                                type="number"
+                                [(ngModel)]="awayScores[i]"
+                                class="p-2 border rounded-md w-20 text-center"
+                            />
+                        </div>
+
+                        <!-- Save & Cancel Buttons -->
+                        <button
+                            (click)="saveScore(i)"
+                            class="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700"
+                        >
+                            Save
+                        </button>
+                        <button
+                            (click)="cancelEdit()"
+                            class="bg-gray-400 text-white py-1 px-3 rounded-md hover:bg-gray-500"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </ng-template>
+            </div>
+
+            <!-- Message to inform user to complete the previous quarter first -->
+            <div *ngIf="!canShowQuarter(i)" class="text-gray-500 text-sm mt-2">
+                Enter and save Quarter {{ i }} scores first.
+            </div>
+        </div>
+    </div>
+</div>

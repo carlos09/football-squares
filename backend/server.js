@@ -151,18 +151,27 @@ app.post('/api/users/create', async (req, res) => {
 
             // If gameId is provided, insert into user_games
             if (gameId) {
-                // Check if the game exists
+                console.log(`Checking if game ${gameId} exists...`);
+
                 const gameCheck = await client.query(
                     `SELECT id FROM games WHERE id = $1`,
                     [gameId],
                 );
 
+                console.log('Game exists:', gameCheck.rows.length > 0);
+
                 if (gameCheck.rows.length > 0) {
+                    console.log(
+                        `Inserting user ${userId} into user_games with role ${defaultRoleId}...`,
+                    );
+
                     await client.query(
                         `INSERT INTO user_games (id, user_id, game_id, role_id, created_at) 
                          VALUES (gen_random_uuid(), $1, $2, $3, NOW())`,
                         [userId, gameId, defaultRoleId],
                     );
+
+                    console.log('User successfully linked to game!');
                 } else {
                     console.warn(
                         `Game ${gameId} not found. Skipping user_games insert.`,
@@ -517,12 +526,23 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found in game' });
         }
 
-        // Fetch players in the game
+        // Fetch players and their selection counts
         const playersResult = await pool.query(
-            `SELECT ug.user_id, u.username, ug.role_id, u.has_paid 
-             FROM user_games ug
-             JOIN users u ON ug.user_id = u.id
-             WHERE ug.game_id = $1`,
+            `SELECT 
+                ug.user_id, 
+                u.username, 
+                ug.role_id, 
+                u.has_paid, 
+                COALESCE(s.selection_count, 0) AS selection_count
+            FROM user_games ug
+            JOIN users u ON ug.user_id = u.id
+            LEFT JOIN (
+                SELECT user_id, COUNT(*) AS selection_count
+                FROM selections 
+                WHERE game_id = $1
+                GROUP BY user_id
+            ) s ON ug.user_id = s.user_id
+            WHERE ug.game_id = $1`,
             [gameId],
         );
 
@@ -536,13 +556,14 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             toCamelCase({
                 gameId: gameResult.rows[0].id,
                 gameCode: gameResult.rows[0].game_code,
-                settings: gameResult.rows[0].saved_settings ?? {}, // Ensure it's an object or empty
+                settings: gameResult.rows[0].saved_settings ?? {},
                 roleId: userRoleResult.rows[0].role_id,
                 players: playersResult.rows.map((player) => ({
                     userId: player.user_id,
                     username: player.username,
                     roleId: player.role_id,
                     hasPaid: player.has_paid ?? 0,
+                    selectionCount: player.selection_count,
                 })),
                 selections: selectionsResult.rows.map((selection) => ({
                     squareId: selection.square_id,
@@ -566,7 +587,7 @@ app.patch('/api/users/:userId/payment-status', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE users SET has_paid = $1 WHERE user_id = $2 RETURNING *',
+            'UPDATE users SET has_paid = $1 WHERE id = $2 RETURNING *',
             [hasPaid, userId],
         );
 

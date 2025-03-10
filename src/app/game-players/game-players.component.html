@@ -1,0 +1,38 @@
+<div class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold mb-6">Game Players</h2>
+
+        <ul>
+            <li *ngFor="let player of (gameState$ | async)?.players">
+                <div class="flex justify-between items-center p-2 border-b">
+                    <span>
+                        {{ player.username }}
+                        <span
+                            *ngIf="player.roleId === role.GameAdmin"
+                            class="text-xs text-green-600"
+                        >
+                            (Admin)
+                        </span>
+                        <span class="text-gray-400 text-xs"
+                            >({{ player.selectionCount }} Squares)</span
+                        >
+                    </span>
+
+                    <span
+                        *ngIf="(gameState$ | async)?.roleId === role.GameAdmin"
+                    >
+                        <mat-slide-toggle
+                            [checked]="player.hasPaid"
+                            (change)="
+                                togglePaymentStatus(player, $event.checked)
+                            "
+                            color="primary"
+                        >
+                            Paid
+                        </mat-slide-toggle>
+                    </span>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

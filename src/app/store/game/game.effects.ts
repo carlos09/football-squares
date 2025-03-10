@@ -67,11 +67,12 @@ export class GameEffects {
             ofType(GameActions.getGameId),
             switchMap(({ gameCode }) =>
                 this.gameService.getGameId(gameCode).pipe(
-                    map((response) =>
-                        GameActions.getGameIdSuccess({
-                            gameId: response.gameId,
-                        }),
-                    ),
+                    map((response) => {
+                        console.log('RESPONSE: ', response);
+                        return GameActions.getGameIdSuccess({
+                            gameId: response.id,
+                        });
+                    }),
                     catchError((error) =>
                         of(
                             GameActions.getGameIdFailure({

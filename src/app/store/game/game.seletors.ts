@@ -54,3 +54,10 @@ export const selectUserSelectedSquares = createSelector(
 export const selectGameSettings = createSelector(selectGameState, (state) => {
     return state.settings;
 });
+
+export const selectHaveNumbersBeenGenerated = createSelector(
+    selectGameState,
+    (state) => {
+        return state.haveNumbersBeenGenerated;
+    },
+);

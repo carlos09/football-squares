@@ -8,80 +8,39 @@
                 <app-game-grid
                     [xAxisNumbers]="xAxisNumbers"
                     [yAxisNumbers]="yAxisNumbers"
-                    [generated]="generated"
+                    [generated]="(numbersGenerated$ | async) ?? false"
                     [selectedSquares]="(selectedSquares$ | async) ?? []"
                     [takenSquares]="(gameUserSelections$ | async) ?? []"
                     (selectionChanged)="updateSelectedCount($event)"
                 ></app-game-grid>
-                <button
-                    (click)="finishSelection()"
-                    [disabled]="!(hasChanges$ | async)"
-                    class="mt-4 px-4 py-2 bg-green-600 text-white rounded-md"
-                >
-                    Finished selecting my squares ({{
-                        (selectedSquares$ | async)?.length || 0
-                    }})
-                </button>
 
-                <button
-                    (click)="generateAxisNumbers()"
-                    class="mb-4 px-4 py-2 bg-green-500 text-white rounded"
-                >
-                    Generate Numbers
-                </button>
+                <div class="p-4 flex gap-4">
+                    <button
+                        *ngIf="!(numbersGenerated$ | async)"
+                        (click)="finishSelection()"
+                        [disabled]="!(hasChanges$ | async)"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md"
+                    >
+                        Save Selections ({{
+                            (selectedSquares$ | async)?.length || 0
+                        }})
+                    </button>
+
+                    <button
+                        (click)="generateAxisNumbers()"
+                        class="px-4 py-2 bg-green-500 text-white rounded"
+                    >
+                        Generate Numbers
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="col-span-3">
-            <div
-                class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6"
-            >
-                <app-game-settings
-                    (gameSettings)="gameSettingsSave($event)"
-                ></app-game-settings>
-            </div>
-        </div>
-        <div class="hidden">
-            <div class="bg-white shadow-lg rounded-lg">
-                <h2 class="text-xl font-bold">Players</h2>
-
-                <ul>
-                    <li *ngFor="let player of (gameState$ | async)?.players">
-                        <div
-                            class="flex justify-between items-center p-2 border-b"
-                        >
-                            <span>
-                                {{ player.username }}
-                                <span
-                                    *ngIf="player.roleId === role.GameAdmin"
-                                    class="text-sm text-green-600"
-                                >
-                                    (Game Admin)
-                                </span>
-                            </span>
-
-                            <span
-                                *ngIf="
-                                    (gameState$ | async)?.roleId ===
-                                    role.GameAdmin
-                                "
-                            >
-                                <mat-slide-toggle
-                                    [checked]="player.hasPaid"
-                                    (change)="
-                                        togglePaymentStatus(
-                                            player,
-                                            $event.checked
-                                        )
-                                    "
-                                    color="primary"
-                                >
-                                    Paid
-                                </mat-slide-toggle>
-                            </span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+        <div class="col-span-3 flex flex-col gap-4">
+            <app-game-settings
+                (gameSettings)="gameSettingsSave($event)"
+            ></app-game-settings>
+            <app-game-players></app-game-players>
+            <app-game-scoring></app-game-scoring>
         </div>
     </div>
 </div>
