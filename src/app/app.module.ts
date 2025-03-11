@@ -34,6 +34,7 @@ import {
     UserRound,
     Loader,
     CircleHelp,
+    Dot,
 } from 'lucide-angular';
 import { GameSettingsComponent } from './game-settings/game-settings.component';
 import { CommonModule } from '@angular/common';
@@ -82,6 +83,7 @@ import { GamePlayersComponent } from './game-players/game-players.component';
             UserRound,
             Loader,
             CircleHelp,
+            Dot,
         }),
     ],
     providers: [provideAnimationsAsync()],

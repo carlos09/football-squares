@@ -156,6 +156,53 @@ export class GameEffects {
         ),
     );
 
+    startGame$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.startGame),
+            mergeMap(({ gameId }) =>
+                this.gameService.startGame(gameId).pipe(
+                    map((response) =>
+                        GameActions.startGameSuccess({
+                            hasStarted: response.hasStarted,
+                        }),
+                    ),
+                    catchError((error) =>
+                        of(GameActions.startGameFailure({ error })),
+                    ),
+                ),
+            ),
+        ),
+    );
+
+    updateScore$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.updateScore),
+            withLatestFrom(this.store.select(selectGameId)), // Get latest gameId from store
+            mergeMap(
+                ([{ scoreIndex, homeTeam, awayTeam, endQuarter }, gameId]) =>
+                    this.gameService
+                        .updateScore(
+                            gameId,
+                            scoreIndex + 1,
+                            homeTeam,
+                            awayTeam,
+                            endQuarter,
+                        )
+                        .pipe(
+                            map((resp) => {
+                                console.log('resp', resp);
+                                return GameActions.updateScoreSuccess({
+                                    quarterUpdate: resp,
+                                });
+                            }),
+                            catchError((error) =>
+                                of(GameActions.updateScoreFailure({ error })),
+                            ),
+                        ),
+            ),
+        ),
+    );
+
     constructor(
         private actions$: Actions,
         private gameService: GameService,

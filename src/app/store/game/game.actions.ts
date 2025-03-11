@@ -144,3 +144,44 @@ export const generateSquaresNumbers = createAction(
     '[Game Component] Square Numbers Generated',
     props<{ haveNumbersBeenGenerated: boolean }>(),
 );
+
+export const startGame = createAction(
+    '[Game Component] Start Game Settings',
+    props<{
+        gameId: string;
+    }>(),
+);
+
+export const startGameSuccess = createAction(
+    '[Game API] Start Game Success',
+    props<{
+        hasStarted: boolean;
+    }>(),
+);
+
+export const startGameFailure = createAction(
+    '[Game API] Start Game Failure',
+    props<{ error: string }>(),
+);
+
+export const updateScore = createAction(
+    '[Game Scoring Component] Update Score',
+    props<{
+        scoreIndex: number;
+        homeTeam: number;
+        awayTeam: number;
+        endQuarter?: boolean;
+    }>(),
+);
+
+export const updateScoreSuccess = createAction(
+    '[Game Scoring Component] Update Score Success',
+    props<{
+        quarterUpdate: any;
+    }>(),
+);
+
+export const updateScoreFailure = createAction(
+    '[Game Scoring Component] Update Score Failure',
+    props<{ error: string }>(),
+);

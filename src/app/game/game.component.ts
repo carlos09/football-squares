@@ -306,4 +306,10 @@ export class GameComponent implements OnInit, OnDestroy {
             }),
         );
     }
+
+    startGame() {
+        this.store.dispatch(
+            GameActions.startGame({ gameId: this.gameId as any }),
+        );
+    }
 }

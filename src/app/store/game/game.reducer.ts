@@ -2,19 +2,18 @@ import { createReducer, on } from '@ngrx/store';
 import * as GameActions from './game.actions';
 import { Player } from 'src/app/models/player.model';
 import { SquareSelection } from 'src/app/models/square-selection.model';
+import { Score } from 'src/app/models/game-scoring.model';
+import { GameSettings } from 'src/app/models/game-settings.model';
 
 export interface GameState {
     gameId: string | null;
     gameCode: string | null;
-    roleId: number | null;
+    gameHasStarted: boolean;
     players: Player[];
     selections: SquareSelection[];
-    settings: {
-        homeTeam: string;
-        awayTeam: string;
-        pricePerSquare: number;
-    };
+    settings: GameSettings;
     haveNumbersBeenGenerated: boolean;
+    scoring: Score[];
     loading: boolean;
     error: any;
 }
@@ -22,15 +21,46 @@ export interface GameState {
 export const initialState: GameState = {
     gameId: null,
     gameCode: null,
-    roleId: null,
+    gameHasStarted: false,
     players: [],
     selections: [],
     settings: {
         homeTeam: '',
         awayTeam: '',
+        gameStartTime: '',
         pricePerSquare: 0,
     },
     haveNumbersBeenGenerated: false,
+    scoring: [
+        {
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        }, // Q1
+        {
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        }, // Q2
+        {
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        }, // Q3
+        {
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        }, // Q4
+    ],
     loading: false,
     error: null,
 };
@@ -42,6 +72,8 @@ export const gameReducer = createReducer(
         GameActions.generateGameCode,
         GameActions.createGame,
         GameActions.saveGameSettings,
+        GameActions.startGame,
+        GameActions.updateScore,
         (state) => ({
             ...state,
             loading: true,
@@ -52,7 +84,7 @@ export const gameReducer = createReducer(
     on(GameActions.generateGameCodeSuccess, (state, { gameCode }) => ({
         ...state,
         gameCode,
-        loading: false, // Fix: should be false after success
+        loading: false,
         error: null,
     })),
 
@@ -66,6 +98,35 @@ export const gameReducer = createReducer(
             loading: false,
         }),
     ),
+    on(GameActions.startGameSuccess, (state, { hasStarted }) => {
+        console.log('hasStarted: ', hasStarted);
+        let updatedScoring = state.scoring.map((quarter, index) => ({
+            ...quarter,
+            isLive: false,
+        }));
+
+        if (hasStarted) {
+            const liveQuarterIndex = updatedScoring.findIndex(
+                (q) => q.homeTeam === 0 && q.awayTeam === 0,
+            );
+
+            if (liveQuarterIndex !== -1) {
+                updatedScoring[liveQuarterIndex] = {
+                    ...updatedScoring[liveQuarterIndex],
+                    isLive: true,
+                };
+            }
+        }
+
+        return {
+            ...state,
+            gameHasStarted: hasStarted,
+            scoring: updatedScoring,
+            loading: false,
+            error: null,
+        };
+    }),
+
     on(
         GameActions.fetchGame,
         GameActions.getGameInfo,
@@ -77,10 +138,9 @@ export const gameReducer = createReducer(
     ),
 
     on(GameActions.fetchGameSuccess, (state, { game }) => {
-        console.log('game: ', game.settings);
         return {
             ...state,
-            gameId: game.id,
+            gameId: game.gameId as any,
             gameCode: game.gameCode,
             roleId: game.roleId,
             players: game.players,
@@ -90,12 +150,14 @@ export const gameReducer = createReducer(
                 awayTeam: game.settings.awayTeam,
                 pricePerSquare: game.settings.pricePerSquare,
             },
+            gameHasStarted: game.hasStarted,
+            scoring: game.scoring,
             loading: false,
             error: null,
         };
     }),
+
     on(GameActions.saveGameSettingsSuccess, (state, settings) => {
-        console.log('settings SAVE', settings);
         return {
             ...state,
             settings: {
@@ -103,7 +165,7 @@ export const gameReducer = createReducer(
                 awayTeam: settings.awayTeam,
                 pricePerSquare: settings.pricePerSquare,
             },
-            loading: false, // Fix: should be false after success
+            loading: false,
             error: null,
         };
     }),
@@ -113,6 +175,8 @@ export const gameReducer = createReducer(
         GameActions.getGameIdFailure,
         GameActions.saveGameSettingsFailure,
         GameActions.createGameFailure,
+        GameActions.startGameFailure,
+        GameActions.updateScoreFailure,
         (state, { error }) => ({
             ...state,
             loading: false,
@@ -165,6 +229,14 @@ export const gameReducer = createReducer(
             players: state.players.map((player) =>
                 player.id === userId ? { ...player, hasPaid } : player,
             ),
+        };
+    }),
+    on(GameActions.updateScoreSuccess, (state, { quarterUpdate }) => {
+        return {
+            ...state,
+            scoring: quarterUpdate,
+            loading: false,
+            error: null,
         };
     }),
 );

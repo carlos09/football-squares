@@ -1,38 +1,163 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
+import { Score } from '../models/game-scoring.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '../store/app.state';
+import { selectQuarterScoring } from '../store/game/game.seletors';
+import * as GameActions from '../store/game/game.actions';
 
 @Component({
     selector: 'app-game-scoring',
     standalone: false,
     templateUrl: './game-scoring.component.html',
-    styleUrl: './game-scoring.component.scss',
+    styleUrls: ['./game-scoring.component.scss'],
 })
-export class GameScoringComponent {
-    quarters = [1, 2, 3, 4];
-    homeScores: number[] = [0, 0, 0, 0];
-    awayScores: number[] = [0, 0, 0, 0];
+export class GameScoringComponent implements OnInit {
+    quarters = [
+        {
+            quarter: 1,
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        },
+        {
+            quarter: 2,
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        },
+        {
+            quarter: 3,
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        },
+        {
+            quarter: 4,
+            isLive: false,
+            homeTeam: 0,
+            awayTeam: 0,
+            winner: '',
+            hasEnded: false,
+        },
+    ];
     savedScores: { home: number; away: number }[] = [];
     editingIndex: number | null = null;
+    scoring$: Observable<Score[]>;
+    private scoreUpdate$ = new Subject<{
+        index: number;
+        home: number;
+        away: number;
+    }>();
 
-    constructor() {
+    constructor(private store: Store<AppState>) {}
+
+    ngOnInit(): void {
         this.savedScores = this.quarters.map(() => ({ home: 0, away: 0 }));
+        this.scoring$ = this.store.select(selectQuarterScoring);
+
+        this.scoring$.subscribe((scoringData) => {
+            console.log('Component Scoring:', scoringData);
+
+            // Map the scoring data to the quarters array, ensuring correct property names
+            this.quarters = this.quarters.map((quarter, index) => {
+                const scoreData = scoringData.find(
+                    (q) => q.quarter === index + 1,
+                ) || {
+                    quarter: index + 1,
+                    isLive: false,
+                    hasEnded: false,
+                    homeTeam: 0,
+                    awayTeam: 0,
+                    winner: '',
+                };
+
+                console.log('score Data: ', scoreData);
+
+                return {
+                    ...quarter,
+                    isLive: scoreData.isLive,
+                    homeTeam: scoreData.homeTeam,
+                    awayTeam: scoreData.awayTeam,
+                    winner: scoreData.winner,
+                    hasEnded: scoreData.hasEnded ?? false,
+                };
+            });
+
+            console.log('quarters: ', this.quarters);
+        });
+
+        this.scoreUpdate$
+            .pipe(
+                debounceTime(1000),
+                distinctUntilChanged(
+                    (prev, curr) =>
+                        prev.index === curr.index &&
+                        prev.home === curr.home &&
+                        prev.away === curr.away,
+                ),
+            )
+            .subscribe(({ index, home, away }) =>
+                this.updateScore(index, home, away),
+            );
     }
 
     saveScore(index: number) {
         if (
-            this.homeScores[index] !== null &&
-            this.awayScores[index] !== null
+            this.quarters[index].homeTeam !== null &&
+            this.quarters[index].awayTeam !== null
         ) {
             this.savedScores[index] = {
-                home: this.homeScores[index],
-                away: this.awayScores[index],
+                home: this.quarters[index].homeTeam,
+                away: this.quarters[index].awayTeam,
             };
             console.log(`Saved Q${index + 1} Score:`, this.savedScores[index]);
             this.editingIndex = null; // Exit edit mode
         }
     }
 
+    onScoreChange(index: number) {
+        const home = this.quarters[index].homeTeam;
+        const away = this.quarters[index].awayTeam;
+        this.scoreUpdate$.next({ index, home, away });
+    }
+
+    updateScore(index: number, home: number, away: number) {
+        this.store.dispatch(
+            GameActions.updateScore({
+                scoreIndex: index,
+                homeTeam: home,
+                awayTeam: away,
+            }),
+        );
+        console.log(`Updated Q${index + 1} Score:`, home, away);
+    }
+
+    // Ends the quarter and saves score
+    endQuarter(homeTeam: number, awayTeam: number, index: number) {
+        // this.saveScore(index);
+        // this.quarters[index].isLive = false;
+
+        this.store.dispatch(
+            GameActions.updateScore({
+                scoreIndex: index,
+                homeTeam: homeTeam,
+                awayTeam: awayTeam,
+                endQuarter: true,
+            }),
+        );
+    }
+
+    // Allows editing the quarter again
     editScore(index: number) {
         this.editingIndex = index;
+        this.quarters[index].isLive = true;
     }
 
     cancelEdit() {

@@ -56,6 +56,7 @@ export class GameService {
     }
 
     getGame(userId: string, gameId: string): Observable<Game> {
+        console.log('GET GAME');
         return this.http.get<Game>(
             `${this.baseUrl}/api/game/${gameId}/user/${userId}`,
         );
@@ -126,6 +127,27 @@ export class GameService {
         return this.http.post(`${this.baseUrl}/api/game/${gameId}/settings`, {
             settings,
         });
+    }
+
+    startGame(gameId: string): Observable<{ hasStarted: boolean }> {
+        return this.http.post<{ hasStarted: boolean }>(
+            `${this.baseUrl}/api/games/${gameId}/start`,
+            {},
+        );
+    }
+
+    updateScore(
+        gameId: string,
+        quarter: number,
+        homeTeam: number,
+        awayTeam: number,
+        endQuarter = false,
+    ): Observable<{ quarterUpdate: any }> {
+        console.log('in here to update score');
+        return this.http.put<{ quarterUpdate: any }>(
+            `${this.baseUrl}/api/games/${gameId}/quarters/${quarter}`,
+            { homeTeam, awayTeam, endQuarter },
+        );
     }
 
     // getSelectedSquares(gameId: string | null): Observable<any> {

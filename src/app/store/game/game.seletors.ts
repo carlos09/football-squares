@@ -16,10 +16,10 @@ export const selectGameId = createSelector(
     (state) => state.gameId ?? '',
 );
 
-export const selectRoleId = createSelector(
-    selectGameState,
-    (state) => state.roleId,
-);
+// export const selectRoleId = createSelector(
+//     selectGameState,
+//     (state) => state.roleId,
+// );
 
 export const selectGameLoading = createSelector(
     selectGameState,
@@ -39,7 +39,7 @@ export const selectGameUrl = createSelector(
 export const selectGameStateData = createSelector(selectGameState, (state) => ({
     gameId: state.gameId,
     gameCode: state.gameCode,
-    roleId: state.roleId,
+    // roleId: state.roleId,
     loading: state.loading,
     error: state.error,
     players: state.players,
@@ -61,3 +61,13 @@ export const selectHaveNumbersBeenGenerated = createSelector(
         return state.haveNumbersBeenGenerated;
     },
 );
+
+export const selectQuarterScoring = createSelector(selectGameState, (state) => {
+    return state.scoring;
+});
+
+export const selectLiveQuarter = createSelector(selectGameState, (state) => {
+    const liveIndex = state.scoring.findIndex((quarter) => quarter.isLive);
+    console.log('Live Quarter from Selector:', liveIndex);
+    return liveIndex !== -1 ? liveIndex : null;
+});

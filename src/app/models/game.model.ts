@@ -1,8 +1,10 @@
+import { Score } from './game-scoring.model';
 import { Player } from './player.model';
 import { SquareSelection } from './square-selection.model';
 
 export interface Game {
     id: string;
+    gameId?: string;
     url_id: string | null;
     created_at: Date | string;
     gameCode: string;
@@ -15,4 +17,6 @@ export interface Game {
         awayTeam: string;
         pricePerSquare: number;
     };
+    scoring: Score[];
+    hasStarted: boolean;
 }
