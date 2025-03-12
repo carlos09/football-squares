@@ -71,3 +71,7 @@ export const selectLiveQuarter = createSelector(selectGameState, (state) => {
     console.log('Live Quarter from Selector:', liveIndex);
     return liveIndex !== -1 ? liveIndex : null;
 });
+
+export const selectAxisNumbers = createSelector(selectGameState, (state) => {
+    return state.axisNumbers;
+});

@@ -32,10 +32,8 @@ export class GameService {
         password: string,
         gameIdStr?: string,
     ): Observable<User> {
-        console.log('gameIdStr: ', gameIdStr);
         const gameId = gameIdStr && gameIdStr.trim().length ? gameIdStr : null;
 
-        console.log('gameId to pass in: ', gameId);
         return this.http.post<User>(`${this.baseUrl}/api/users/create`, {
             username,
             password,
@@ -56,7 +54,6 @@ export class GameService {
     }
 
     getGame(userId: string, gameId: string): Observable<Game> {
-        console.log('GET GAME');
         return this.http.get<Game>(
             `${this.baseUrl}/api/game/${gameId}/user/${userId}`,
         );
@@ -143,19 +140,22 @@ export class GameService {
         awayTeam: number,
         endQuarter = false,
     ): Observable<{ quarterUpdate: any }> {
-        console.log('in here to update score');
         return this.http.put<{ quarterUpdate: any }>(
             `${this.baseUrl}/api/games/${gameId}/quarters/${quarter}`,
             { homeTeam, awayTeam, endQuarter },
         );
     }
 
-    // getSelectedSquares(gameId: string | null): Observable<any> {
-    //     console.log('Fetching squares for user:and game:', gameId);
-    //     return this.http.get(
-    //         `${this.baseUrl}/api/games/${gameId}/selected-squares`,
-    //     );
-    // }
+    saveAxisNumbers(
+        gameId: string,
+        xAxis: number[],
+        yAxis: number[],
+    ): Observable<{ axisNumbers: any }> {
+        return this.http.put<{ axisNumbers: any }>(
+            `${this.baseUrl}/api/games/${gameId}/axis-numbers`,
+            { xAxis, yAxis },
+        );
+    }
 
     createGameCode(): Observable<GameCode> {
         return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {});

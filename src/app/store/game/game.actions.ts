@@ -140,9 +140,25 @@ export const saveGameSettingsFailure = createAction(
     props<{ error: string }>(),
 );
 
-export const generateSquaresNumbers = createAction(
-    '[Game Component] Square Numbers Generated',
-    props<{ haveNumbersBeenGenerated: boolean }>(),
+export const saveAxisNumbers = createAction(
+    '[Game Component] Save Generated Axis Numbers',
+    props<{
+        // haveNumbersBeenGenerated: boolean;
+        xAxis: number[];
+        yAxis: number[];
+    }>(),
+);
+
+export const saveAxisNumbersSuccess = createAction(
+    '[Game Component] Save Generated Axis Numbers Success',
+    props<{
+        axisNumbers: any;
+    }>(),
+);
+
+export const saveAxisNumbersFailure = createAction(
+    '[Game API] Save Generated Axis Numbers Failure',
+    props<{ error: string }>(),
 );
 
 export const startGame = createAction(

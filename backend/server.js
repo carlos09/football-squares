@@ -535,9 +535,10 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             gameId,
         });
 
-        // Fetch game details including has_started and saved_settings
+        // Fetch game details including has_started, saved_settings, and axis numbers
         const gameResult = await pool.query(
-            `SELECT id, game_code, saved_settings, has_started FROM games WHERE id = $1`,
+            `SELECT id, game_code, saved_settings, has_started, x_axis_numbers, y_axis_numbers 
+             FROM games WHERE id = $1`,
             [gameId],
         );
 
@@ -604,7 +605,9 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
                 gameId: gameResult.rows[0].id,
                 gameCode: gameResult.rows[0].game_code,
                 settings: gameResult.rows[0].saved_settings ?? {},
-                hasStarted: gameResult.rows[0].has_started, // Include hasStarted
+                hasStarted: gameResult.rows[0].has_started,
+                xAxisNumbers: gameResult.rows[0].x_axis_numbers, // Include x_axis_numbers
+                yAxisNumbers: gameResult.rows[0].y_axis_numbers, // Include y_axis_numbers
                 roleId: userRoleResult.rows[0].role_id,
                 players: playersResult.rows.map((player) => ({
                     userId: player.user_id,
@@ -617,7 +620,7 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
                     squareId: selection.square_id,
                     userId: selection.user_id,
                 })),
-                scoring, // Include scoring data in response
+                scoring, // Include scoring data
             }),
         );
     } catch (error) {
@@ -782,6 +785,39 @@ app.put('/api/games/:gameId/quarters/:quarter', async (req, res) => {
         res.json(toCamelCase(allQuarters.rows)); // Return full game scoring
     } catch (err) {
         console.error('Error updating score:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Set axis numbers
+app.put('/api/games/:gameId/axis-numbers', async (req, res) => {
+    const { gameId } = req.params;
+    let { xAxis, yAxis } = req.body;
+
+    // Ensure we pass NULL instead of an empty array
+    xAxis = xAxis.length ? xAxis : null;
+    yAxis = yAxis.length ? yAxis : null;
+
+    try {
+        const result = await pool.query(
+            `UPDATE games 
+             SET x_axis_numbers = $1::integer[], y_axis_numbers = $2::integer[]
+             WHERE id = $3 RETURNING *`,
+            [xAxis, yAxis, gameId],
+        );
+
+        if (!result.rows.length) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json(
+            toCamelCase({
+                xAxisNumbers: result.rows[0].x_axis_numbers,
+                yAxisNumbers: result.rows[0].y_axis_numbers,
+            }),
+        );
+    } catch (err) {
+        console.error('Error saving axis numbers:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

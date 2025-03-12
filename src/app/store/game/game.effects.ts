@@ -177,7 +177,7 @@ export class GameEffects {
     updateScore$ = createEffect(() =>
         this.actions$.pipe(
             ofType(GameActions.updateScore),
-            withLatestFrom(this.store.select(selectGameId)), // Get latest gameId from store
+            withLatestFrom(this.store.select(selectGameId)),
             mergeMap(
                 ([{ scoreIndex, homeTeam, awayTeam, endQuarter }, gameId]) =>
                     this.gameService
@@ -189,16 +189,35 @@ export class GameEffects {
                             endQuarter,
                         )
                         .pipe(
-                            map((resp) => {
-                                console.log('resp', resp);
-                                return GameActions.updateScoreSuccess({
+                            map((resp) =>
+                                GameActions.updateScoreSuccess({
                                     quarterUpdate: resp,
-                                });
-                            }),
+                                }),
+                            ),
                             catchError((error) =>
                                 of(GameActions.updateScoreFailure({ error })),
                             ),
                         ),
+            ),
+        ),
+    );
+
+    saveGeneratedAxisNumbers$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.saveAxisNumbers),
+            withLatestFrom(this.store.select(selectGameId)),
+            mergeMap(([{ xAxis, yAxis }, gameId]) =>
+                this.gameService.saveAxisNumbers(gameId, xAxis, yAxis).pipe(
+                    map((resp) => {
+                        console.log('axis resp', resp);
+                        return GameActions.saveAxisNumbersSuccess({
+                            axisNumbers: resp,
+                        });
+                    }),
+                    catchError((error) =>
+                        of(GameActions.saveAxisNumbersFailure({ error })),
+                    ),
+                ),
             ),
         ),
     );

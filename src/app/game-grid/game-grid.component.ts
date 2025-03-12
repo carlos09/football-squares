@@ -29,7 +29,6 @@ export class GameGridComponent implements OnInit {
     ngOnInit(): void {
         this.store.select(selectGameSettings).subscribe((settings) => {
             if (settings.homeTeam) {
-                console.log('in here with: ', settings);
                 this.homeTeam = settings?.homeTeam.toLowerCase();
                 this.awayTeam = settings?.awayTeam.toLowerCase();
             }

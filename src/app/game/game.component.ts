@@ -34,8 +34,8 @@ import * as selectionActions from '../store/selections/selections.actions';
 import { Game } from '../models/game.model';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import {
+    selectAxisNumbers,
     selectGameId,
-    selectGameSettings,
     selectGameStateData,
     selectHaveNumbersBeenGenerated,
     selectUserSelectedSquares,
@@ -61,9 +61,7 @@ export class GameComponent implements OnInit, OnDestroy {
     gameState$: Observable<any>;
     isGameAdmin = false;
     role = Role;
-    xAxisNumbers = Array(10).fill(null);
-    yAxisNumbers = Array(10).fill(null);
-    // generated = false;
+    axisNumbers$: Observable<any>;
 
     private subscriptions = new Set<Subscription>();
 
@@ -94,12 +92,9 @@ export class GameComponent implements OnInit, OnDestroy {
         this.user$ = this.store.select(selectUser);
         this.store.dispatch(selectionActions.checkForHasChanges());
         this.gameState$ = this.store.select(selectGameStateData);
+        this.axisNumbers$ = this.store.select(selectAxisNumbers);
         this.numbersGenerated$ = this.store.select(
             selectHaveNumbersBeenGenerated,
-        );
-
-        console.log(
-            `Initial state: gameId=${this.gameId}, userId=${this.userId}`,
         );
 
         if (!this.userId) {
@@ -173,16 +168,11 @@ export class GameComponent implements OnInit, OnDestroy {
                 take(1),
             )
             .subscribe(({ userId, currentGame }) => {
-                console.log('Fetched userId: ', userId);
-                console.log('Fetched current game: ', currentGame);
                 this.gameId = currentGame?.id as any;
                 localStorage.setItem('gameId', this.gameId as any);
 
                 this.userId = userId || localStorage.getItem('userId');
                 this.game = currentGame;
-                // this.gameId = currentGame?.id;
-
-                console.log('Updated game info: ', this.game);
 
                 this.loadSelections();
             });
@@ -203,7 +193,6 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     openCreateUserDialog(): void {
-        console.log('gameId to pass to create user: ', this.gameId);
         const dialogRef = this.dialog.open(CreateUserDialogComponent, {
             width: '400px',
             disableClose: true,
@@ -211,9 +200,7 @@ export class GameComponent implements OnInit, OnDestroy {
         });
 
         dialogRef.afterClosed().subscribe((userId) => {
-            console.log('** result: ', userId);
             if (userId) {
-                console.log('User created with ID:', userId);
                 localStorage.setItem('userId', userId);
                 this.userId = userId;
                 this.getGameDetails();
@@ -252,7 +239,6 @@ export class GameComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe((selectedSquareIds) => {
-                console.log('userId: ', this.userId);
                 this.store.dispatch(
                     saveSelectedSquares({
                         gameId: this.gameId,
@@ -273,30 +259,28 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     generateAxisNumbers(): void {
-        this.xAxisNumbers = this.shuffleArray(
+        const xAxisNumbers = this.shuffleArray(
             Array.from({ length: 10 }, (_, i) => i),
         );
-        this.yAxisNumbers = this.shuffleArray(
+        const yAxisNumbers = this.shuffleArray(
             Array.from({ length: 10 }, (_, i) => i),
         );
-        // this.generated = true;
         this.store.dispatch(
-            GameActions.generateSquaresNumbers({
-                haveNumbersBeenGenerated: true,
+            GameActions.saveAxisNumbers({
+                xAxis: xAxisNumbers,
+                yAxis: yAxisNumbers,
             }),
         );
     }
 
-    // Utility function to shuffle an array using Fisher-Yates algorithm
     shuffleArray(array: number[]): number[] {
         return array
-            .map((value) => ({ value, sort: Math.random() })) // Assign a random sort key
-            .sort((a, b) => a.sort - b.sort) // Sort based on the random key
-            .map(({ value }) => value); // Extract the shuffled values
+            .map((value) => ({ value, sort: Math.random() }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ value }) => value);
     }
 
     gameSettingsSave(settings: any) {
-        console.log('dispatch action!:', settings);
         this.store.dispatch(
             GameActions.saveGameSettings({
                 gameId: this.gameId as any,

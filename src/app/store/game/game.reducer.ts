@@ -13,6 +13,10 @@ export interface GameState {
     selections: SquareSelection[];
     settings: GameSettings;
     haveNumbersBeenGenerated: boolean;
+    axisNumbers: {
+        xAxis: any;
+        yAxis: any;
+    };
     scoring: Score[];
     loading: boolean;
     error: any;
@@ -31,6 +35,10 @@ export const initialState: GameState = {
         pricePerSquare: 0,
     },
     haveNumbersBeenGenerated: false,
+    axisNumbers: {
+        xAxis: Array(10).fill(0),
+        yAxis: Array(10).fill(0),
+    },
     scoring: [
         {
             isLive: false,
@@ -74,6 +82,7 @@ export const gameReducer = createReducer(
         GameActions.saveGameSettings,
         GameActions.startGame,
         GameActions.updateScore,
+        GameActions.saveAxisNumbers,
         (state) => ({
             ...state,
             loading: true,
@@ -99,7 +108,6 @@ export const gameReducer = createReducer(
         }),
     ),
     on(GameActions.startGameSuccess, (state, { hasStarted }) => {
-        console.log('hasStarted: ', hasStarted);
         let updatedScoring = state.scoring.map((quarter, index) => ({
             ...quarter,
             isLive: false,
@@ -150,6 +158,15 @@ export const gameReducer = createReducer(
                 awayTeam: game.settings.awayTeam,
                 pricePerSquare: game.settings.pricePerSquare,
             },
+            axisNumbers: {
+                xAxis: game.xAxisNumbers ?? Array(10).fill(0),
+                yAxis: game.yAxisNumbers ?? Array(10).fill(0),
+            },
+            haveNumbersBeenGenerated:
+                Array.isArray(game.xAxisNumbers) &&
+                game.xAxisNumbers.length > 0 &&
+                Array.isArray(game.yAxisNumbers) &&
+                game.yAxisNumbers.length > 0,
             gameHasStarted: game.hasStarted,
             scoring: game.scoring,
             loading: false,
@@ -216,9 +233,13 @@ export const gameReducer = createReducer(
         loading: false,
         error: null,
     })),
-    on(GameActions.generateSquaresNumbers, (state, action) => ({
+    on(GameActions.saveAxisNumbersSuccess, (state, { axisNumbers }) => ({
         ...state,
-        haveNumbersBeenGenerated: action.haveNumbersBeenGenerated,
+        haveNumbersBeenGenerated: true,
+        axisNumbers: {
+            xAxis: axisNumbers.xAxisNumbers,
+            yAxis: axisNumbers.yAxisNumbers,
+        },
         loading: false,
         error: null,
     })),
@@ -231,12 +252,10 @@ export const gameReducer = createReducer(
             ),
         };
     }),
-    on(GameActions.updateScoreSuccess, (state, { quarterUpdate }) => {
-        return {
-            ...state,
-            scoring: quarterUpdate,
-            loading: false,
-            error: null,
-        };
-    }),
+    on(GameActions.updateScoreSuccess, (state, { quarterUpdate }) => ({
+        ...state,
+        scoring: quarterUpdate,
+        loading: false,
+        error: null,
+    })),
 );

@@ -63,9 +63,6 @@ export class GameScoringComponent implements OnInit {
         this.scoring$ = this.store.select(selectQuarterScoring);
 
         this.scoring$.subscribe((scoringData) => {
-            console.log('Component Scoring:', scoringData);
-
-            // Map the scoring data to the quarters array, ensuring correct property names
             this.quarters = this.quarters.map((quarter, index) => {
                 const scoreData = scoringData.find(
                     (q) => q.quarter === index + 1,
@@ -78,8 +75,6 @@ export class GameScoringComponent implements OnInit {
                     winner: '',
                 };
 
-                console.log('score Data: ', scoreData);
-
                 return {
                     ...quarter,
                     isLive: scoreData.isLive,
@@ -89,8 +84,6 @@ export class GameScoringComponent implements OnInit {
                     hasEnded: scoreData.hasEnded ?? false,
                 };
             });
-
-            console.log('quarters: ', this.quarters);
         });
 
         this.scoreUpdate$
@@ -117,8 +110,7 @@ export class GameScoringComponent implements OnInit {
                 home: this.quarters[index].homeTeam,
                 away: this.quarters[index].awayTeam,
             };
-            console.log(`Saved Q${index + 1} Score:`, this.savedScores[index]);
-            this.editingIndex = null; // Exit edit mode
+            this.editingIndex = null;
         }
     }
 
@@ -136,14 +128,10 @@ export class GameScoringComponent implements OnInit {
                 awayTeam: away,
             }),
         );
-        console.log(`Updated Q${index + 1} Score:`, home, away);
     }
 
     // Ends the quarter and saves score
     endQuarter(homeTeam: number, awayTeam: number, index: number) {
-        // this.saveScore(index);
-        // this.quarters[index].isLive = false;
-
         this.store.dispatch(
             GameActions.updateScore({
                 scoreIndex: index,

@@ -6,8 +6,8 @@
                 class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6"
             >
                 <app-game-grid
-                    [xAxisNumbers]="xAxisNumbers"
-                    [yAxisNumbers]="yAxisNumbers"
+                    [xAxisNumbers]="(axisNumbers$ | async).xAxis"
+                    [yAxisNumbers]="(axisNumbers$ | async).yAxis"
                     [generated]="(numbersGenerated$ | async) ?? false"
                     [selectedSquares]="(selectedSquares$ | async) ?? []"
                     [takenSquares]="(gameUserSelections$ | async) ?? []"

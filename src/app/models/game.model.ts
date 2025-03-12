@@ -17,6 +17,8 @@ export interface Game {
         awayTeam: string;
         pricePerSquare: number;
     };
+    xAxisNumbers: number[];
+    yAxisNumbers: number[];
     scoring: Score[];
     hasStarted: boolean;
 }
