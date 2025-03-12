@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import * as startGameActions from '../store/game/game.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store/app.state';
-import { filter, Observable, take } from 'rxjs';
+import { filter, Observable, of, take } from 'rxjs';
 // import { selectGameUrl } from '../store/game/game.seletors';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +12,8 @@ import * as GameActions from '../store/game/game.actions';
 import { Game } from '../models/game.model';
 import { selectUser, selectUserGames } from '../store/user/user.selectors';
 import { selectGameId, selectGameUrl } from '../store/game/game.seletors';
+import { LoginDialogComponent } from '../dialog/login-dialog/login-dialog.component';
+import { selectIsAuthenticated } from '../store/auth/auth.selectors';
 
 @Component({
     selector: 'app-landing',
@@ -25,6 +27,7 @@ export class LandingComponent implements OnInit {
     games$!: Observable<Game[]>;
     userId: string | null = null;
     user$: Observable<string>;
+    isAuthenticated$: Observable<boolean> = of(false);
 
     constructor(
         private router: Router,
@@ -37,6 +40,7 @@ export class LandingComponent implements OnInit {
         this.games$ = this.store.select(selectUserGames);
         this.userId = localStorage.getItem('userId');
         this.user$ = this.store.select(selectUser);
+        this.isAuthenticated$ = this.store.select(selectIsAuthenticated);
 
         if (this.userId) {
             this.store.dispatch(userActions.fetchUser({ userId: this.userId }));
@@ -88,6 +92,14 @@ export class LandingComponent implements OnInit {
                 }
             });
         }
+    }
+
+    login() {
+        const dialogRef = this.dialog.open(LoginDialogComponent);
+
+        dialogRef.afterClosed().subscribe(() => {
+            console.log('login successful');
+        });
     }
 
     clearLocalStorage() {

@@ -14,6 +14,13 @@
         >
             Start a New Game
         </button>
+        <button
+            *ngIf="!(isAuthenticated$ | async)"
+            (click)="login()"
+            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md"
+        >
+            Login
+        </button>
         <button (click)="clearLocalStorage()">Clear Local Storage</button>
     </div>
 

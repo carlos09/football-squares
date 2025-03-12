@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { AppState } from '../store/app.state';
 import { selectUser } from '../store/user/user.selectors';
+import * as AuthActions from '../store/auth/auth.actions';
 
 @Component({
     selector: 'app-header',
@@ -13,6 +14,7 @@ import { selectUser } from '../store/user/user.selectors';
 })
 export class HeaderComponent implements OnInit {
     user$: Observable<string>;
+    isDropdownOpen = false;
 
     constructor(
         private store: Store<AppState>,
@@ -21,5 +23,14 @@ export class HeaderComponent implements OnInit {
 
     ngOnInit() {
         this.user$ = this.store.select(selectUser);
+    }
+
+    toggleDropdown() {
+        this.isDropdownOpen = !this.isDropdownOpen;
+    }
+
+    logout() {
+        this.store.dispatch(AuthActions.logout());
+        this.isDropdownOpen = false;
     }
 }

@@ -1,17 +1,12 @@
 import { createReducer, on } from '@ngrx/store';
-import {
-    createUser,
-    createUserSuccess,
-    createUserFailure,
-    fetchUser,
-    fetchUserSuccess,
-    fetchUserFailure,
-} from './user.actions';
+import * as UserActions from './user.actions';
 import { Game } from 'src/app/models/game.model';
 
 export interface UserState {
     userId: string;
     username: string;
+    // token: string | null;
+    // isAuthenticated: boolean;
     roleId?: any;
     games: Game[];
     loading: boolean;
@@ -21,6 +16,8 @@ export interface UserState {
 export const initialState: UserState = {
     userId: '',
     username: '',
+    // token: null,
+    // isAuthenticated: false,
     roleId: null,
     games: [],
     loading: false,
@@ -29,52 +26,56 @@ export const initialState: UserState = {
 
 export const userReducer = createReducer(
     initialState,
-
-    on(createUser, (state) => ({
-        ...state,
-        createUserSuccess: false,
-        createUserError: null,
-        loading: true,
-        error: null,
-    })),
-
-    on(createUserSuccess, (state, { userId, username, roleId }) => ({
-        ...state,
-        loading: false,
-        userId,
-        username,
-        roleId,
-        games: [],
-        error: null,
-    })),
-
-    on(createUserFailure, (state, { error }) => ({
-        ...state,
-        createUserSuccess: false,
-        loading: false,
-        error,
-    })),
-    on(fetchUser, (state) => ({
+    on(UserActions.createUser, (state) => ({
         ...state,
         loading: true,
         error: null,
     })),
-    on(fetchUserSuccess, (state, { user, games }) => {
-        const newState: UserState = {
+    on(
+        UserActions.createUserSuccess,
+        (state, { userId, username, roleId }) => ({
             ...state,
-            userId: user.userId,
-            username: user.username,
-            roleId: user.roleId,
-            games,
+            loading: false,
+            userId,
+            username,
+            roleId,
             error: null,
-        };
-
-        return newState;
-    }),
-
-    on(fetchUserFailure, (state, { error }) => ({
+        }),
+    ),
+    on(UserActions.createUserFailure, (state, { error }) => ({
         ...state,
         loading: false,
         error,
+    })),
+    on(UserActions.fetchUserSuccess, (state, { user, games }) => ({
+        ...state,
+        userId: user.userId,
+        username: user.username,
+        roleId: user.roleId,
+        games,
+        error: null,
+    })),
+    // on(
+    //     UserActions.loginSuccess,
+    //     (state, { userId, username, token, roleId }) => ({
+    //         ...state,
+    //         userId,
+    //         username,
+    //         token,
+    //         roleId,
+    //         isAuthenticated: true,
+    //         error: null,
+    //     }),
+    // ),
+
+    // on(UserActions.loginFailure, (state, { error }) => ({
+    //     ...state,
+    //     isAuthenticated: false,
+    //     token: null,
+    //     error,
+    // })),
+
+    on(UserActions.logout, () => ({
+        ...initialState,
     })),
 );

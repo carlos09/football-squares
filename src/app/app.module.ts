@@ -6,7 +6,7 @@ import { AppComponent } from './app.component';
 import { GameGridComponent } from './game-grid/game-grid.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { SquarePickComponent } from './dialog/square-pick/square-pick.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -40,6 +40,8 @@ import { GameSettingsComponent } from './game-settings/game-settings.component';
 import { CommonModule } from '@angular/common';
 import { GameScoringComponent } from './game-scoring/game-scoring.component';
 import { GamePlayersComponent } from './game-players/game-players.component';
+import { AuthInterceptor } from './services/auth.interceptor';
+import { LoginDialogComponent } from './dialog/login-dialog/login-dialog.component';
 
 @NgModule({
     declarations: [
@@ -54,6 +56,7 @@ import { GamePlayersComponent } from './game-players/game-players.component';
         GameSettingsComponent,
         GameScoringComponent,
         GamePlayersComponent,
+        LoginDialogComponent,
     ],
     imports: [
         BrowserModule,
@@ -86,7 +89,10 @@ import { GamePlayersComponent } from './game-players/game-players.component';
             Dot,
         }),
     ],
-    providers: [provideAnimationsAsync()],
+    providers: [
+        provideAnimationsAsync(),
+        { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    ],
     bootstrap: [AppComponent],
 })
 export class AppModule {}

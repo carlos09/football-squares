@@ -36,3 +36,25 @@ export const fetchUserFailure = createAction(
     '[Fetch User API] Fetch User Failure',
     props<{ error: any }>(),
 );
+
+// export const login = createAction(
+//     '[Auth] Login',
+//     props<{ username: string; password: string }>(),
+// );
+
+// export const loginSuccess = createAction(
+//     '[Auth] Login Success',
+//     props<{
+//         userId: string;
+//         username: string;
+//         token: string;
+//         roleId: number;
+//     }>(),
+// );
+
+// export const loginFailure = createAction(
+//     '[Auth] Login Failure',
+//     props<{ error: any }>(),
+// );
+
+export const logout = createAction('[Auth] Logout');

@@ -7,11 +7,27 @@
         height="42"
         alt="Squares Logo"
     />
-    <div class="login text-center flex flex-col items-center">
-        <lucide-icon
-            class="w-8 h-8 text-[var(--color-tan)]"
-            name="circle-user-round"
-        ></lucide-icon>
-        <div class="text-sm mt-1">{{ user$ | async }}</div>
+    <div class="relative login text-center flex flex-col items-center">
+        <!-- User Icon and Name (Clickable) -->
+        <button (click)="toggleDropdown()" class="focus:outline-none">
+            <lucide-icon
+                class="w-8 h-8 text-[var(--color-tan)]"
+                name="circle-user-round"
+            ></lucide-icon>
+            <div class="text-sm mt-1">{{ user$ | async }}</div>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div
+            *ngIf="isDropdownOpen"
+            class="absolute top-12 -left-18 w-36 bg-white border rounded-lg shadow-md"
+        >
+            <button
+                (click)="logout()"
+                class="block w-full text-left px-4 py-2 text-gray-400 text-sm hover:bg-gray-100"
+            >
+                Log Out
+            </button>
+        </div>
     </div>
 </div>
