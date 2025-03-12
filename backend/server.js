@@ -63,10 +63,9 @@ app.post('/api/games/create', async (req, res) => {
 
     try {
         const { userId } = req.body;
-
-        // Validate userId format
         const uuidRegex =
             /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
         if (!userId || !uuidRegex.test(userId)) {
             return res.status(400).json({ error: 'Invalid User ID format' });
         }
@@ -79,26 +78,34 @@ app.post('/api/games/create', async (req, res) => {
         try {
             await client.query('BEGIN');
 
-            // 1️⃣ Insert the game first
+            // Insert the game
             const gameResult = await client.query(
-                `INSERT INTO games (id, game_code, admin_user_id, created_at) 
-                 VALUES ($1, $2, $3, NOW()) 
+                `INSERT INTO games (id, game_code, admin_user_id, created_at, has_started) 
+                 VALUES ($1, $2, $3, NOW(), FALSE) 
                  RETURNING *`,
                 [gameId, gameCode, userId],
             );
 
-            // 2️⃣ Insert the admin user into user_games
+            // Insert admin user into user_games
             await client.query(
                 `INSERT INTO user_games (game_id, user_id, role_id) 
                  VALUES ($1, $2, 1)`,
                 [gameId, userId],
             );
 
+            // Initialize scoring for 4 quarters
+            for (let q = 1; q <= 4; q++) {
+                await client.query(
+                    `INSERT INTO game_scoring (game_id, quarter, is_live, home_team_score, away_team_score, winner, has_ended) 
+         VALUES ($1, $2, FALSE, 0, 0, '', FALSE)`,
+                    [gameId, q],
+                );
+            }
+
             await client.query('COMMIT');
 
             const game = gameResult.rows[0];
 
-            console.log('game created: ', toCamelCase(game));
             res.json({
                 gameId: game.id,
                 gameCode: game.game_code,
@@ -151,18 +158,27 @@ app.post('/api/users/create', async (req, res) => {
 
             // If gameId is provided, insert into user_games
             if (gameId) {
-                // Check if the game exists
+                console.log(`Checking if game ${gameId} exists...`);
+
                 const gameCheck = await client.query(
                     `SELECT id FROM games WHERE id = $1`,
                     [gameId],
                 );
 
+                console.log('Game exists:', gameCheck.rows.length > 0);
+
                 if (gameCheck.rows.length > 0) {
+                    console.log(
+                        `Inserting user ${userId} into user_games with role ${defaultRoleId}...`,
+                    );
+
                     await client.query(
                         `INSERT INTO user_games (id, user_id, game_id, role_id, created_at) 
                          VALUES (gen_random_uuid(), $1, $2, $3, NOW())`,
                         [userId, gameId, defaultRoleId],
                     );
+
+                    console.log('User successfully linked to game!');
                 } else {
                     console.warn(
                         `Game ${gameId} not found. Skipping user_games insert.`,
@@ -197,7 +213,7 @@ app.get('/api/game/:gameCode', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'SELECT id FROM games WHERE game_code = $1',
+            'SELECT id, saved_settings FROM games WHERE game_code = $1',
             [gameCode],
         );
 
@@ -205,9 +221,37 @@ app.get('/api/game/:gameCode', async (req, res) => {
             return res.status(404).json({ error: 'Game not found' });
         }
 
-        res.json({ gameId: result.rows[0].id });
+        res.json(result.rows[0]); // Return id and saved_settings
     } catch (err) {
         console.error(`Error in /api/game/:gameCode:`, err);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
+// Saving Game Settings
+app.post('/api/game/:gameId/settings', async (req, res) => {
+    const { gameId } = req.params;
+    const { settings } = req.body;
+
+    console.log(`Request save Game for ${gameId} with:`, settings);
+
+    if (!settings || typeof settings !== 'object') {
+        return res.status(400).json({ error: 'Invalid settings format' });
+    }
+
+    try {
+        const result = await pool.query(
+            'UPDATE games SET saved_settings = $1 WHERE id = $2 RETURNING saved_settings',
+            [settings, gameId],
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json({ settings: result.rows[0].saved_settings });
+    } catch (err) {
+        console.error(`Error updating settings for game ${gameId}:`, err);
         res.status(500).json({ error: 'An error occurred' });
     }
 });
@@ -257,6 +301,7 @@ const toCamelCase = (obj) => {
     return obj;
 };
 
+// Fetch Game
 app.get('/api/users/:userId/games/:gameId', async (req, res) => {
     const { userId, gameId } = req.params;
     console.log(`Fetching game for userId: ${userId} and gameId: ${gameId}`);
@@ -273,7 +318,7 @@ app.get('/api/users/:userId/games/:gameId', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const actualUserId = userResult.rows[0].id; // The internal `users.id`
+        const actualUserId = userResult.rows[0].id; // Internal `users.id`
 
         // Step 2: Check if user is linked via `user_games` OR is `admin_user_id`
         const userGameResult = await pool.query(
@@ -284,9 +329,9 @@ app.get('/api/users/:userId/games/:gameId', async (req, res) => {
         let roleId = null;
 
         if (userGameResult.rows.length) {
-            roleId = userGameResult.rows[0].role_id; // User found in user_games
+            roleId = userGameResult.rows[0].role_id;
         } else {
-            // Step 3: Check if user is the game's admin
+            // Check if the user is the game admin
             const adminCheckResult = await pool.query(
                 `SELECT id FROM games WHERE id = $1 AND admin_user_id = $2`,
                 [gameId, userId],
@@ -301,10 +346,10 @@ app.get('/api/users/:userId/games/:gameId', async (req, res) => {
                     .json({ error: 'User is not part of this game' });
             }
 
-            roleId = 1; // Assume `1` means admin if the user is the game's admin
+            roleId = 1; // Admin role
         }
 
-        // Step 4: Fetch game details
+        // Step 3: Fetch game details, including `has_started`
         const gameResult = await pool.query(
             `SELECT * FROM games WHERE id = $1`,
             [gameId],
@@ -315,7 +360,28 @@ app.get('/api/users/:userId/games/:gameId', async (req, res) => {
             return res.status(404).json({ error: 'Game not found' });
         }
 
-        res.json(toCamelCase({ ...gameResult.rows[0], roleId }));
+        // Step 4: Fetch game scoring details
+        const scoringResult = await pool.query(
+            `SELECT quarter, is_live, home_team_score, away_team_score, winner
+             FROM game_scoring WHERE game_id = $1
+             ORDER BY quarter ASC`,
+            [gameId],
+        );
+
+        const scoring = scoringResult.rows.map((row) => ({
+            isLive: row.is_live,
+            homeTeam: row.home_team_score,
+            awayTeam: row.away_team_score,
+            winner: row.winner,
+        }));
+
+        res.json(
+            toCamelCase({
+                ...gameResult.rows[0],
+                roleId,
+                scoring,
+            }),
+        );
     } catch (err) {
         console.error('Error fetching game:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -469,9 +535,10 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             gameId,
         });
 
-        // Fetch game details
+        // Fetch game details including has_started, saved_settings, and axis numbers
         const gameResult = await pool.query(
-            `SELECT id, game_code FROM games WHERE id = $1`,
+            `SELECT id, game_code, saved_settings, has_started, x_axis_numbers, y_axis_numbers 
+             FROM games WHERE id = $1`,
             [gameId],
         );
 
@@ -489,12 +556,23 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found in game' });
         }
 
-        // Fetch players in the game
+        // Fetch players and their selection counts
         const playersResult = await pool.query(
-            `SELECT ug.user_id, u.username, ug.role_id, u.has_paid 
-             FROM user_games ug
-             JOIN users u ON ug.user_id = u.id
-             WHERE ug.game_id = $1`,
+            `SELECT 
+                ug.user_id, 
+                u.username, 
+                ug.role_id, 
+                u.has_paid, 
+                COALESCE(s.selection_count, 0) AS selection_count
+            FROM user_games ug
+            JOIN users u ON ug.user_id = u.id
+            LEFT JOIN (
+                SELECT user_id, COUNT(*) AS selection_count
+                FROM selections 
+                WHERE game_id = $1
+                GROUP BY user_id
+            ) s ON ug.user_id = s.user_id
+            WHERE ug.game_id = $1`,
             [gameId],
         );
 
@@ -504,21 +582,45 @@ app.get('/api/game/:gameId/user/:userId', async (req, res) => {
             [gameId],
         );
 
+        // Fetch game scoring details
+        const scoringResult = await pool.query(
+            `SELECT quarter, is_live, home_team_score, away_team_score, winner, has_ended
+             FROM game_scoring WHERE game_id = $1
+             ORDER BY quarter ASC`,
+            [gameId],
+        );
+
+        // Map scoring results
+        const scoring = scoringResult.rows.map((row) => ({
+            quarter: row.quarter,
+            isLive: row.is_live,
+            homeTeam: row.home_team_score,
+            awayTeam: row.away_team_score,
+            winner: row.winner,
+            hasEnded: row.has_ended,
+        }));
+
         res.json(
             toCamelCase({
                 gameId: gameResult.rows[0].id,
                 gameCode: gameResult.rows[0].game_code,
+                settings: gameResult.rows[0].saved_settings ?? {},
+                hasStarted: gameResult.rows[0].has_started,
+                xAxisNumbers: gameResult.rows[0].x_axis_numbers, // Include x_axis_numbers
+                yAxisNumbers: gameResult.rows[0].y_axis_numbers, // Include y_axis_numbers
                 roleId: userRoleResult.rows[0].role_id,
                 players: playersResult.rows.map((player) => ({
                     userId: player.user_id,
                     username: player.username,
                     roleId: player.role_id,
-                    hasPaid: player.has_paid ?? false,
+                    hasPaid: player.has_paid ?? 0,
+                    selectionCount: player.selection_count,
                 })),
                 selections: selectionsResult.rows.map((selection) => ({
                     squareId: selection.square_id,
                     userId: selection.user_id,
                 })),
+                scoring, // Include scoring data
             }),
         );
     } catch (error) {
@@ -537,7 +639,7 @@ app.patch('/api/users/:userId/payment-status', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'UPDATE users SET has_paid = $1 WHERE user_id = $2 RETURNING *',
+            'UPDATE users SET has_paid = $1 WHERE id = $2 RETURNING *',
             [hasPaid, userId],
         );
 
@@ -552,6 +654,171 @@ app.patch('/api/users/:userId/payment-status', async (req, res) => {
     } catch (error) {
         console.error('Error updating payment status:', error);
         res.status(500).json({ error: 'Failed to update payment status' });
+    }
+});
+
+// Start Game
+app.post('/api/games/:gameId/start', async (req, res) => {
+    const { gameId } = req.params;
+
+    try {
+        await pool.query('BEGIN'); // Start transaction
+
+        // Update game to started
+        const updateGameResult = await pool.query(
+            `UPDATE games SET has_started = TRUE WHERE id = $1 RETURNING *`,
+            [gameId],
+        );
+
+        if (!updateGameResult.rows.length) {
+            await pool.query('ROLLBACK');
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        // Set Quarter 1 as live
+        const updateQuarterResult = await pool.query(
+            `UPDATE game_scoring SET is_live = TRUE WHERE game_id = $1 AND quarter = 1 RETURNING *`,
+            [gameId],
+        );
+
+        if (!updateQuarterResult.rows.length) {
+            await pool.query('ROLLBACK');
+            return res
+                .status(404)
+                .json({ error: 'No quarter data found for this game' });
+        }
+
+        await pool.query('COMMIT'); // Commit transaction
+
+        res.json(
+            toCamelCase({
+                hasStarted: updateGameResult.rows[0].has_started,
+                currentQuarter: updateQuarterResult.rows[0].quarter,
+                isLive: updateQuarterResult.rows[0].is_live,
+            }),
+        );
+    } catch (err) {
+        await pool.query('ROLLBACK'); // Rollback transaction on error
+        console.error('Error starting game:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Updating score / End Quarter
+app.put('/api/games/:gameId/quarters/:quarter', async (req, res) => {
+    const { gameId, quarter } = req.params;
+    const { homeTeam, awayTeam, endQuarter } = req.body;
+
+    console.log(`Updating quarter ${quarter} for game ${gameId}`);
+
+    try {
+        // Update the current quarter's score
+        const result = await pool.query(
+            `UPDATE game_scoring
+             SET home_team_score = COALESCE($1, home_team_score),
+                 away_team_score = COALESCE($2, away_team_score)
+             WHERE game_id = $3 AND quarter = $4
+             RETURNING *`,
+            [homeTeam, awayTeam, gameId, quarter],
+        );
+
+        if (!result.rows.length) {
+            return res
+                .status(404)
+                .json({ error: 'Quarter not found for this game' });
+        }
+
+        let updatedQuarter = result.rows[0]; // Store the updated quarter data
+        let responseMessage = 'Score updated';
+
+        // If `endQuarter` is true, mark this quarter as ended
+        if (endQuarter) {
+            const endResult = await pool.query(
+                `UPDATE game_scoring    
+                 SET is_live = false, has_ended = true
+                 WHERE game_id = $1 AND quarter = $2
+                 RETURNING *`,
+                [gameId, quarter],
+            );
+
+            if (endResult.rows.length) {
+                updatedQuarter = endResult.rows[0]; // Update quarter with new status
+            }
+
+            // Start next quarter if it exists
+            const nextQuarter = parseInt(quarter) + 1;
+            const nextQuarterResult = await pool.query(
+                `SELECT * FROM game_scoring
+                 WHERE game_id = $1 AND quarter = $2`,
+                [gameId, nextQuarter],
+            );
+
+            if (nextQuarterResult.rows.length) {
+                // Carry over the score from the previous quarter
+                const { home_team_score, away_team_score } = updatedQuarter;
+
+                await pool.query(
+                    `UPDATE game_scoring
+                     SET is_live = true,
+                         home_team_score = $1,
+                         away_team_score = $2
+                     WHERE game_id = $3 AND quarter = $4`,
+                    [home_team_score, away_team_score, gameId, nextQuarter],
+                );
+
+                responseMessage += `. Quarter ${quarter} ended. Quarter ${nextQuarter} started with scores carried over.`;
+            } else {
+                responseMessage += `. Quarter ${quarter} ended. No more quarters available.`;
+            }
+        }
+
+        // Fetch all quarters' scores for the game
+        const allQuarters = await pool.query(
+            `SELECT quarter, is_live, home_team_score AS home_team, 
+                    away_team_score AS away_team, winner, has_ended
+             FROM game_scoring
+             WHERE game_id = $1
+             ORDER BY quarter`,
+            [gameId],
+        );
+
+        res.json(toCamelCase(allQuarters.rows)); // Return full game scoring
+    } catch (err) {
+        console.error('Error updating score:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Set axis numbers
+app.put('/api/games/:gameId/axis-numbers', async (req, res) => {
+    const { gameId } = req.params;
+    let { xAxis, yAxis } = req.body;
+
+    // Ensure we pass NULL instead of an empty array
+    xAxis = xAxis.length ? xAxis : null;
+    yAxis = yAxis.length ? yAxis : null;
+
+    try {
+        const result = await pool.query(
+            `UPDATE games 
+             SET x_axis_numbers = $1::integer[], y_axis_numbers = $2::integer[]
+             WHERE id = $3 RETURNING *`,
+            [xAxis, yAxis, gameId],
+        );
+
+        if (!result.rows.length) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        res.json(
+            toCamelCase({
+                xAxisNumbers: result.rows[0].x_axis_numbers,
+                yAxisNumbers: result.rows[0].y_axis_numbers,
+            }),
+        );
+    } catch (err) {
+        console.error('Error saving axis numbers:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

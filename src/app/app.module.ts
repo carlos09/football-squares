@@ -32,7 +32,14 @@ import {
     UserCheck,
     CircleUserRound,
     UserRound,
+    Loader,
+    CircleHelp,
+    Dot,
 } from 'lucide-angular';
+import { GameSettingsComponent } from './game-settings/game-settings.component';
+import { CommonModule } from '@angular/common';
+import { GameScoringComponent } from './game-scoring/game-scoring.component';
+import { GamePlayersComponent } from './game-players/game-players.component';
 
 @NgModule({
     declarations: [
@@ -44,9 +51,14 @@ import {
         GameComponent,
         LandingComponent,
         HeaderComponent,
+        GameSettingsComponent,
+        GameScoringComponent,
+        GamePlayersComponent,
     ],
     imports: [
         BrowserModule,
+        CommonModule,
+        FormsModule,
         AppRoutingModule,
         HttpClientModule,
         MatDialogModule,
@@ -69,6 +81,9 @@ import {
             UserCheck,
             CircleUserRound,
             UserRound,
+            Loader,
+            CircleHelp,
+            Dot,
         }),
     ],
     providers: [provideAnimationsAsync()],

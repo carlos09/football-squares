@@ -1,5 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SquareSelection } from '../models/square-selection.model';
+import { Store } from '@ngrx/store';
+import { AppState } from '../store/app.state';
+import { Observable } from 'rxjs';
+import { selectGameSettings } from '../store/game/game.seletors';
 
 @Component({
     selector: 'app-game-grid',
@@ -7,14 +11,38 @@ import { SquareSelection } from '../models/square-selection.model';
     templateUrl: './game-grid.component.html',
     styleUrl: './game-grid.component.scss',
 })
-export class GameGridComponent {
+export class GameGridComponent implements OnInit {
     @Input() selectedSquares: number[] = [];
     @Input() takenSquares: SquareSelection[] = [];
+    @Input() xAxisNumbers: number[] = [];
+    @Input() yAxisNumbers: number[] = [];
+    @Input() generated: boolean = false;
     @Output() selectionChanged = new EventEmitter<number[]>();
-    numbers = Array.from({ length: 100 }, (_, i) => i + 1);
+    @Output() generateNumbers = new EventEmitter<void>();
+    numbers: number[][] = [];
+    settings$: Observable<any>;
+    homeTeam = '';
+    awayTeam = '';
+
+    constructor(private store: Store<AppState>) {}
+
+    ngOnInit(): void {
+        this.store.select(selectGameSettings).subscribe((settings) => {
+            if (settings.homeTeam) {
+                this.homeTeam = settings?.homeTeam.toLowerCase();
+                this.awayTeam = settings?.awayTeam.toLowerCase();
+            }
+        });
+        this.initializeGrid();
+    }
+
+    initializeGrid() {
+        this.numbers = Array.from({ length: 10 }, (_, row) =>
+            Array.from({ length: 10 }, (_, col) => row * 10 + col + 1),
+        );
+    }
 
     toggleSquare(num: number) {
-        console.log('this.selectedSquares: ', this.selectedSquares);
         if (this.isTaken(num)) return;
 
         const updatedSelection = this.selectedSquares.includes(num)
@@ -25,15 +53,12 @@ export class GameGridComponent {
     }
 
     isTaken(num: number): boolean {
-        if (this.selectedSquares.includes(num)) {
-            this.takenSquares = this.takenSquares.filter(
-                (s) => s.squareId !== num,
-            );
-            return false;
-        }
-
         return this.takenSquares.some(
             (selection) => selection.squareId === num,
         );
+    }
+
+    requestNumberGeneration() {
+        this.generateNumbers.emit();
     }
 }

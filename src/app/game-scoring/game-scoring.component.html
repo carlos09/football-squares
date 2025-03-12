@@ -1,0 +1,113 @@
+<div class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold mb-6">Game Scoring</h2>
+
+        <div
+            *ngFor="let quarter of quarters; let i = index"
+            class="mb-4 p-4 border rounded-md transition-all duration-300"
+            [ngClass]="
+                quarter.isLive ? 'border-gray-300 shadow-lg' : 'border-gray-200'
+            "
+        >
+            <div class="flex items-center gap-4">
+                <h3 class="text-lg font-semibold text-gray-600">
+                    Quarter {{ quarter.quarter }}
+                </h3>
+                <span
+                    *ngIf="quarter.isLive"
+                    class="text-xs text-gray-600 font-extrabold text-xl uppercase tracking-widest"
+                    style="text-shadow: 0 0 8px rgba(72, 210, 128, 0.9)"
+                >
+                    LIVE
+                </span>
+            </div>
+
+            <!-- Scenario 1: Quarter is Live -->
+            <div *ngIf="quarter.isLive" class="mt-2 text-sm">
+                <div class="flex space-x-4 items-center mt-2">
+                    <!-- Home Team Score Input -->
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium text-gray-700"
+                            >Home Team</label
+                        >
+                        <input
+                            type="number"
+                            [(ngModel)]="quarters[i].homeTeam"
+                            (ngModelChange)="onScoreChange(i)"
+                            class="p-2 border rounded-md w-20 text-center focus:ring-2 focus:ring-green-300"
+                        />
+                    </div>
+
+                    <!-- Away Team Score Input -->
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium text-gray-700"
+                            >Away Team</label
+                        >
+                        <input
+                            type="number"
+                            [(ngModel)]="quarters[i].awayTeam"
+                            (ngModelChange)="onScoreChange(i)"
+                            class="p-2 border rounded-md w-20 text-center focus:ring-2 focus:ring-green-300"
+                        />
+                    </div>
+
+                    <!-- End Quarter Button -->
+                    <ng-container
+                        *ngIf="!quarters[i].hasEnded; else edittingEndedQuarter"
+                    >
+                        <button
+                            (click)="
+                                endQuarter(
+                                    quarters[i].homeTeam,
+                                    quarters[i].awayTeam,
+                                    i
+                                )
+                            "
+                            class="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 transition"
+                        >
+                            End Quarter
+                        </button>
+                    </ng-container>
+                    <ng-template #edittingEndedQuarter>
+                        <button
+                            (click)="
+                                endQuarter(
+                                    quarters[i].homeTeam,
+                                    quarters[i].awayTeam,
+                                    i
+                                )
+                            "
+                            class="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 transition"
+                        >
+                            Update Score
+                        </button>
+                        <!-- <button (click)="cancelEdit()">Cancel</button> -->
+                    </ng-template>
+                </div>
+            </div>
+
+            <!-- Scenario 2: Quarter Has Not Started -->
+            <div
+                *ngIf="!quarter.isLive && !quarter.hasEnded"
+                class="mt-2 text-gray-400 text-sm"
+            >
+                Quarter has not started yet.
+            </div>
+
+            <!-- Scenario 3: Quarter Has Ended -->
+            <div
+                *ngIf="quarter.hasEnded && editingIndex !== i"
+                class="mt-2 text-gray-700 text-sm"
+            >
+                <strong *ngIf="quarters[i].quarter === 3">Final Score:</strong>
+                Home: {{ quarter.homeTeam }} | Away: {{ quarter.awayTeam }}
+                <button
+                    (click)="editScore(i)"
+                    class="ml-4 text-blue-600 hover:underline"
+                >
+                    Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

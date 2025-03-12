@@ -1,0 +1,6 @@
+.dotIndicator {
+    color: var(--color-gray-200);
+    &.isLiveIndicator {
+        color: var(--color-green-600);
+    }
+}

@@ -67,11 +67,12 @@ export class GameEffects {
             ofType(GameActions.getGameId),
             switchMap(({ gameCode }) =>
                 this.gameService.getGameId(gameCode).pipe(
-                    map((response) =>
-                        GameActions.getGameIdSuccess({
-                            gameId: response.gameId,
-                        }),
-                    ),
+                    map((response) => {
+                        console.log('RESPONSE: ', response);
+                        return GameActions.getGameIdSuccess({
+                            gameId: response.id,
+                        });
+                    }),
                     catchError((error) =>
                         of(
                             GameActions.getGameIdFailure({
@@ -119,6 +120,105 @@ export class GameEffects {
                     gameId: gameId as string,
                 });
             }),
+        ),
+    );
+
+    saveGameSettings$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.saveGameSettings),
+            switchMap(({ gameId, homeTeam, awayTeam, pricePerSquare }) =>
+                this.gameService
+                    .saveGameSettings(gameId, {
+                        homeTeam,
+                        awayTeam,
+                        pricePerSquare,
+                    })
+                    .pipe(
+                        map((resp) => {
+                            console.log('SETTTING EFFECT: ', resp.settings);
+                            return GameActions.saveGameSettingsSuccess({
+                                homeTeam: resp.settings.homeTeam,
+                                awayTeam: resp.settings.awayTeam,
+                                pricePerSquare: resp.settings.pricePerSquare,
+                            });
+                        }),
+                        catchError((error) =>
+                            of(
+                                GameActions.saveGameSettingsFailure({
+                                    error:
+                                        error.message ||
+                                        'Failed to save game settings',
+                                }),
+                            ),
+                        ),
+                    ),
+            ),
+        ),
+    );
+
+    startGame$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.startGame),
+            mergeMap(({ gameId }) =>
+                this.gameService.startGame(gameId).pipe(
+                    map((response) =>
+                        GameActions.startGameSuccess({
+                            hasStarted: response.hasStarted,
+                        }),
+                    ),
+                    catchError((error) =>
+                        of(GameActions.startGameFailure({ error })),
+                    ),
+                ),
+            ),
+        ),
+    );
+
+    updateScore$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.updateScore),
+            withLatestFrom(this.store.select(selectGameId)),
+            mergeMap(
+                ([{ scoreIndex, homeTeam, awayTeam, endQuarter }, gameId]) =>
+                    this.gameService
+                        .updateScore(
+                            gameId,
+                            scoreIndex + 1,
+                            homeTeam,
+                            awayTeam,
+                            endQuarter,
+                        )
+                        .pipe(
+                            map((resp) =>
+                                GameActions.updateScoreSuccess({
+                                    quarterUpdate: resp,
+                                }),
+                            ),
+                            catchError((error) =>
+                                of(GameActions.updateScoreFailure({ error })),
+                            ),
+                        ),
+            ),
+        ),
+    );
+
+    saveGeneratedAxisNumbers$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.saveAxisNumbers),
+            withLatestFrom(this.store.select(selectGameId)),
+            mergeMap(([{ xAxis, yAxis }, gameId]) =>
+                this.gameService.saveAxisNumbers(gameId, xAxis, yAxis).pipe(
+                    map((resp) => {
+                        console.log('axis resp', resp);
+                        return GameActions.saveAxisNumbersSuccess({
+                            axisNumbers: resp,
+                        });
+                    }),
+                    catchError((error) =>
+                        of(GameActions.saveAxisNumbersFailure({ error })),
+                    ),
+                ),
+            ),
         ),
     );
 

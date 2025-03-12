@@ -1,0 +1,92 @@
+<div class="bg-white shadow-lg rounded-2xl border border-gray-200 w-full p-6">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold mb-6">Game Settings</h2>
+
+        <form class="space-y-4" (ngSubmit)="onSubmit()">
+            <!-- Home Team Select -->
+            <div class="flex flex-col">
+                <label for="homeTeam" class="text-lg font-medium text-gray-700"
+                    >Home Team</label
+                >
+                <select
+                    id="homeTeam"
+                    name="homeTeam"
+                    [(ngModel)]="homeTeam"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                >
+                    <option value="" disabled selected>Select Home Team</option>
+                    <option *ngFor="let team of nflTeams" [value]="team.name">
+                        {{ team.city }} {{ team.name }}
+                    </option>
+                </select>
+            </div>
+
+            <!-- Away Team Select -->
+            <div class="flex flex-col">
+                <label for="awayTeam" class="text-lg font-medium text-gray-700"
+                    >Away Team</label
+                >
+                <select
+                    id="awayTeam"
+                    name="awayTeam"
+                    [(ngModel)]="awayTeam"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                >
+                    <option value="" disabled selected>Select Away Team</option>
+                    <option *ngFor="let team of nflTeams" [value]="team.name">
+                        {{ team.city }} {{ team.name }}
+                    </option>
+                </select>
+            </div>
+
+            <!-- Game Time Select -->
+            <!-- <div class="flex flex-col">
+            <label for="gameTime" class="text-lg font-medium text-gray-700"
+                >Game Time</label
+            >
+            <select
+                id="gameTime"
+                name="gameTime"
+                [(ngModel)]="gameTime"
+                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                required
+            >
+                <option value="" disabled selected>Select Game Time</option>
+                <option *ngFor="let time of gameTimes" [value]="time">
+                    {{ time }}
+                </option>
+            </select>
+        </div> -->
+
+            <!-- Square Price Input -->
+            <div class="flex flex-col">
+                <label
+                    for="squarePrice"
+                    class="text-lg font-medium text-gray-700"
+                    >Price Per Square</label
+                >
+                <input
+                    type="number"
+                    id="squarePrice"
+                    name="squarePrice"
+                    [(ngModel)]="squarePrice"
+                    placeholder="Enter price per square"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                />
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button
+                    type="submit"
+                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+                >
+                    Save Settings
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

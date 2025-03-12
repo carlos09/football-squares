@@ -115,3 +115,89 @@ export const updatePlayerPaymentFailure = createAction(
     '[Game API] Update Player Payment Status Failure',
     props<{ error: any }>(),
 );
+
+export const saveGameSettings = createAction(
+    '[Game Component] Save Game Settings',
+    props<{
+        gameId: string;
+        homeTeam: string;
+        awayTeam: string;
+        pricePerSquare: number;
+    }>(),
+);
+
+export const saveGameSettingsSuccess = createAction(
+    '[Game API] Save Game Settings Success',
+    props<{
+        homeTeam: string;
+        awayTeam: string;
+        pricePerSquare: number;
+    }>(),
+);
+
+export const saveGameSettingsFailure = createAction(
+    '[Game API] Save Game Settings Failure',
+    props<{ error: string }>(),
+);
+
+export const saveAxisNumbers = createAction(
+    '[Game Component] Save Generated Axis Numbers',
+    props<{
+        // haveNumbersBeenGenerated: boolean;
+        xAxis: number[];
+        yAxis: number[];
+    }>(),
+);
+
+export const saveAxisNumbersSuccess = createAction(
+    '[Game Component] Save Generated Axis Numbers Success',
+    props<{
+        axisNumbers: any;
+    }>(),
+);
+
+export const saveAxisNumbersFailure = createAction(
+    '[Game API] Save Generated Axis Numbers Failure',
+    props<{ error: string }>(),
+);
+
+export const startGame = createAction(
+    '[Game Component] Start Game Settings',
+    props<{
+        gameId: string;
+    }>(),
+);
+
+export const startGameSuccess = createAction(
+    '[Game API] Start Game Success',
+    props<{
+        hasStarted: boolean;
+    }>(),
+);
+
+export const startGameFailure = createAction(
+    '[Game API] Start Game Failure',
+    props<{ error: string }>(),
+);
+
+export const updateScore = createAction(
+    '[Game Scoring Component] Update Score',
+    props<{
+        scoreIndex: number;
+        homeTeam: number;
+        awayTeam: number;
+        endQuarter?: boolean;
+    }>(),
+);
+
+export const updateScoreSuccess = createAction(
+    '[Game Scoring Component] Update Score Success',
+    props<{
+        quarterUpdate: any;
+    }>(),
+);
+
+export const updateScoreFailure = createAction(
+    '[Game Scoring Component] Update Score Failure',
+    props<{ error: string }>(),
+);

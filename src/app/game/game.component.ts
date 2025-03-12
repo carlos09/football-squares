@@ -16,6 +16,7 @@ import {
     filter,
     switchMap,
     EMPTY,
+    of,
 } from 'rxjs';
 import {
     selectHasChanges,
@@ -31,11 +32,12 @@ import * as UserActions from '../store/user/user.actions';
 import * as GameActions from '../store/game/game.actions';
 import * as selectionActions from '../store/selections/selections.actions';
 import { Game } from '../models/game.model';
-import { Player } from '../models/player.model';
 import { CreateUserDialogComponent } from '../dialog/create-user-dialog/create-user-dialog.component';
 import {
+    selectAxisNumbers,
     selectGameId,
     selectGameStateData,
+    selectHaveNumbersBeenGenerated,
     selectUserSelectedSquares,
 } from '../store/game/game.seletors';
 import { Role } from '../enums/roles.enum';
@@ -50,6 +52,7 @@ import { SquareSelection } from '../models/square-selection.model';
 export class GameComponent implements OnInit, OnDestroy {
     selectedSquares$: Observable<number[]>;
     gameUserSelections$: Observable<SquareSelection[]>;
+    numbersGenerated$: Observable<boolean> = of(false);
     gameId: string | null;
     userId: string | null = null;
     user$: Observable<string>;
@@ -58,6 +61,7 @@ export class GameComponent implements OnInit, OnDestroy {
     gameState$: Observable<any>;
     isGameAdmin = false;
     role = Role;
+    axisNumbers$: Observable<any>;
 
     private subscriptions = new Set<Subscription>();
 
@@ -88,33 +92,27 @@ export class GameComponent implements OnInit, OnDestroy {
         this.user$ = this.store.select(selectUser);
         this.store.dispatch(selectionActions.checkForHasChanges());
         this.gameState$ = this.store.select(selectGameStateData);
-
-        console.log(
-            `Initial state: gameId=${this.gameId}, userId=${this.userId}`,
+        this.axisNumbers$ = this.store.select(selectAxisNumbers);
+        this.numbersGenerated$ = this.store.select(
+            selectHaveNumbersBeenGenerated,
         );
 
         if (!this.userId) {
-            console.log('No userId found, opening create user dialog');
             this.openCreateUserDialog();
         } else {
-            console.log('UserId found in local storage:', this.userId);
             this.store.dispatch(UserActions.fetchUser({ userId: this.userId }));
         }
 
         if (this.gameId && this.userId) {
-            console.log('GameId found in local storage:', this.gameId);
             this.getGameDetails();
         } else {
-            console.log('gameCodeVar: ', gameCodeVar);
             if (gameCodeVar) {
                 this.store.dispatch(
                     GameActions.getGameId({ gameCode: gameCodeVar as any }),
                 );
             }
-            console.log('No gameId found in local storage.');
         }
 
-        // Update userId when fetched from store
         this.subscriptions.add(
             this.store
                 .select(selectUserId)
@@ -123,12 +121,10 @@ export class GameComponent implements OnInit, OnDestroy {
                     take(1),
                 )
                 .subscribe((userId) => {
-                    console.log('Updated userId from store:', userId);
                     this.userId = userId;
                 }),
         );
 
-        // Update gameId when fetched from store
         this.subscriptions.add(
             this.store
                 .select(selectGameId)
@@ -137,7 +133,6 @@ export class GameComponent implements OnInit, OnDestroy {
                     take(1),
                 )
                 .subscribe((gameId) => {
-                    console.log('Updated gameId from store:', gameId);
                     this.gameId = gameId;
                     localStorage.setItem('gameId', gameId);
                 }),
@@ -166,34 +161,24 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     getGameInfo(gameCode: string) {
-        console.log('this.gameId before fetch: ', this.gameId);
-
         this.store
             .select(selectUserAndCurrentGame(gameCode))
             .pipe(
-                filter(({ userId, currentGame }) => !!userId && !!currentGame), // ✅ Check `userId` directly
+                filter(({ userId, currentGame }) => !!userId && !!currentGame),
                 take(1),
             )
             .subscribe(({ userId, currentGame }) => {
-                // ✅ Destructure updated properties
-                console.log('Fetched userId: ', userId);
-                console.log('Fetched current game: ', currentGame);
                 this.gameId = currentGame?.id as any;
                 localStorage.setItem('gameId', this.gameId as any);
 
-                this.userId = userId || localStorage.getItem('userId'); // ✅ Direct access to `userId`
-                // this.user = username; // ✅ Direct access to `username`
+                this.userId = userId || localStorage.getItem('userId');
                 this.game = currentGame;
-                // this.gameId = currentGame?.id;
-
-                console.log('Updated game info: ', this.game);
 
                 this.loadSelections();
             });
     }
 
     loadSelections() {
-        console.log('DO LOAD SELECTIONS!!!');
         if (!this.userId || !this.gameId) {
             console.warn('Skipping loadSelections: Missing userId or gameId');
             return;
@@ -208,17 +193,14 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     openCreateUserDialog(): void {
-        console.log('gameId to pass to create user: ', this.gameId);
         const dialogRef = this.dialog.open(CreateUserDialogComponent, {
             width: '400px',
-            disableClose: true, // Prevent closing without creating a user
-            data: { gameId: this.gameId }, // Pass gameId to the dialog
+            disableClose: true,
+            data: { gameId: this.gameId },
         });
 
         dialogRef.afterClosed().subscribe((userId) => {
-            console.log('** result: ', userId);
             if (userId) {
-                console.log('User created with ID:', userId);
                 localStorage.setItem('userId', userId);
                 this.userId = userId;
                 this.getGameDetails();
@@ -230,7 +212,6 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     updateSelectedCount(squareIds: number[]) {
-        console.log('square ids emitted: ', squareIds);
         this.store.dispatch(
             updateSelectedSquares({ selectedSquareIds: squareIds }),
         );
@@ -241,7 +222,7 @@ export class GameComponent implements OnInit, OnDestroy {
             .pipe(
                 take(1),
                 switchMap((selectedSquareIds) => {
-                    if (selectedSquareIds.length === 0) return EMPTY; // Don't proceed if no squares are selected
+                    if (selectedSquareIds.length === 0) return EMPTY;
 
                     const dialogRef = this.dialog.open(ConfrimDialogComponent, {
                         data: {
@@ -252,17 +233,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
                     return dialogRef.afterClosed().pipe(
                         take(1),
-                        filter((confirmed) => confirmed), // Proceed only if confirmed
+                        filter((confirmed) => confirmed),
                         map(() => selectedSquareIds),
                     );
                 }),
             )
             .subscribe((selectedSquareIds) => {
-                console.log('userId: ', this.userId);
                 this.store.dispatch(
                     saveSelectedSquares({
-                        gameId: this.gameId, // Ensure gameId is available
-                        userId: this.userId as any, // Ensure user is set correctly
+                        gameId: this.gameId,
+                        userId: this.userId as any,
                         selectedSquareIds,
                     }),
                 );
@@ -270,17 +250,50 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     togglePaymentStatus(player: any, hasPaid: boolean) {
-        console.log('player: p, ', player);
-        console.log('hasPaid: ', hasPaid);
-        // if (!this.isGameAdmin) return; // Only allow game admin to toggle
-        // player.hasPaid = !player.hasPaid;
         this.store.dispatch(
             GameActions.updatePlayerPaymentStatus({
                 userId: player.userId,
                 hasPaid,
             }),
         );
+    }
 
-        // this.gameService.updatePlayerPaymentStatus(player.id, player.hasPaid).subscribe();
+    generateAxisNumbers(): void {
+        const xAxisNumbers = this.shuffleArray(
+            Array.from({ length: 10 }, (_, i) => i),
+        );
+        const yAxisNumbers = this.shuffleArray(
+            Array.from({ length: 10 }, (_, i) => i),
+        );
+        this.store.dispatch(
+            GameActions.saveAxisNumbers({
+                xAxis: xAxisNumbers,
+                yAxis: yAxisNumbers,
+            }),
+        );
+    }
+
+    shuffleArray(array: number[]): number[] {
+        return array
+            .map((value) => ({ value, sort: Math.random() }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ value }) => value);
+    }
+
+    gameSettingsSave(settings: any) {
+        this.store.dispatch(
+            GameActions.saveGameSettings({
+                gameId: this.gameId as any,
+                homeTeam: settings.homeTeam,
+                awayTeam: settings.awayTeam,
+                pricePerSquare: settings.squarePrice,
+            }),
+        );
+    }
+
+    startGame() {
+        this.store.dispatch(
+            GameActions.startGame({ gameId: this.gameId as any }),
+        );
     }
 }
