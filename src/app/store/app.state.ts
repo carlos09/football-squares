@@ -7,7 +7,7 @@ import {
 import { SELECTIONS_STATE_NAME } from './selections/selections.selectors';
 import { GameEffects } from './game/game.effects';
 import { GameState, gameReducer } from './game/game.reducer';
-import { GAME_STATE_NAME } from './game/game.seletors';
+import { GAME_STATE_NAME } from './game/game.selectors';
 import { SnackbarEffects } from './shared/shared.effects';
 import { userReducer, UserState } from './user/user.reducer';
 import { USER_STATE_NAME } from './user/user.selectors';

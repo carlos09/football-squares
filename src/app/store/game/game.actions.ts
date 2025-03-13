@@ -201,3 +201,18 @@ export const updateScoreFailure = createAction(
     '[Game Scoring Component] Update Score Failure',
     props<{ error: string }>(),
 );
+
+export const updateQuarterWinner = createAction(
+    '[Game] Update Quarter Winner',
+    props<{ gameId: string; quarter: number; winnerId: string }>(),
+);
+
+export const updateQuarterWinnerSuccess = createAction(
+    '[Game] Update Quarter Winner Success',
+    props<{ quarter: number; winner: string }>(),
+);
+
+export const updateQuarterWinnerFailure = createAction(
+    '[Game] Update Quarter Winner',
+    props<{ error: string }>(),
+);

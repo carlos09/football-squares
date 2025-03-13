@@ -3,7 +3,7 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { gameReducer } from './game.reducer';
 import { GameEffects } from './game.effects';
-import { GAME_STATE_NAME } from './game.seletors';
+import { GAME_STATE_NAME } from './game.selectors';
 
 @NgModule({
     imports: [

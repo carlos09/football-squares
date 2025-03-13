@@ -841,6 +841,33 @@ app.put('/api/games/:gameId/axis-numbers', async (req, res) => {
     }
 });
 
+// Add Quarter Winner
+app.put('/api/games/:gameId/quarters/:quarter/winner', async (req, res) => {
+    const { gameId, quarter } = req.params;
+    const { winner } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE game_scoring
+             SET winner = $1
+             WHERE game_id = $2 AND quarter = $3
+             RETURNING quarter, winner`,
+            [winner, gameId, quarter],
+        );
+
+        if (!result.rows.length) {
+            return res
+                .status(404)
+                .json({ error: 'Quarter not found for this game' });
+        }
+
+        res.json(result.rows[0]); // Return the updated quarter and winner
+    } catch (err) {
+        console.error('Error updating winner:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 async function getGame(gameId) {
     const result = await pool.query('SELECT * FROM games WHERE id = $1', [
         gameId,

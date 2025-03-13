@@ -83,6 +83,7 @@ export const gameReducer = createReducer(
         GameActions.startGame,
         GameActions.updateScore,
         GameActions.saveAxisNumbers,
+        GameActions.updateQuarterWinnerSuccess,
         (state) => ({
             ...state,
             loading: true,
@@ -194,6 +195,7 @@ export const gameReducer = createReducer(
         GameActions.createGameFailure,
         GameActions.startGameFailure,
         GameActions.updateScoreFailure,
+        GameActions.updateQuarterWinnerFailure,
         (state, { error }) => ({
             ...state,
             loading: false,
@@ -258,4 +260,13 @@ export const gameReducer = createReducer(
         loading: false,
         error: null,
     })),
+    on(
+        GameActions.updateQuarterWinnerSuccess,
+        (state, { quarter, winner }) => ({
+            ...state,
+            scoring: state.scoring.map((q, index) =>
+                index === quarter - 1 ? { ...q, winner } : q,
+            ),
+        }),
+    ),
 );

@@ -5,7 +5,7 @@ import { GameService } from '../../services/game.service';
 import * as UserActions from './user.actions';
 import * as AuthActions from '../auth/auth.actions';
 import { Store } from '@ngrx/store';
-import { selectGameId } from '../game/game.seletors';
+import { selectGameId } from '../game/game.selectors';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Injectable()

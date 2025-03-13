@@ -4,7 +4,7 @@ import { catchError, map, switchMap, of, mergeMap, withLatestFrom } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import * as GameActions from './game.actions';
 import { selectUserId } from '../user/user.selectors';
-import { selectGameId } from './game.seletors';
+import { selectGameId } from './game.selectors';
 import { Store } from '@ngrx/store';
 
 @Injectable()
@@ -218,6 +218,31 @@ export class GameEffects {
                         of(GameActions.saveAxisNumbersFailure({ error })),
                     ),
                 ),
+            ),
+        ),
+    );
+
+    updateQuarterWinner$ = createEffect(() =>
+        this.actions$.pipe(
+            ofType(GameActions.updateQuarterWinner),
+            mergeMap(({ gameId, quarter, winnerId }) =>
+                this.gameService
+                    .updateQuarterWinner(gameId, quarter, winnerId)
+                    .pipe(
+                        map((response) =>
+                            GameActions.updateQuarterWinnerSuccess({
+                                quarter: response.quarter,
+                                winner: response.winner,
+                            }),
+                        ),
+                        catchError((error) =>
+                            of(
+                                GameActions.updateQuarterWinnerFailure({
+                                    error,
+                                }),
+                            ),
+                        ),
+                    ),
             ),
         ),
     );

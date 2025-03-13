@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
 import { Score } from '../models/game-scoring.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store/app.state';
-import { selectQuarterScoring } from '../store/game/game.seletors';
+import { selectQuarterScoring } from '../store/game/game.selectors';
 import * as GameActions from '../store/game/game.actions';
 
 @Component({
@@ -50,6 +50,8 @@ export class GameScoringComponent implements OnInit {
     savedScores: { home: number; away: number }[] = [];
     editingIndex: number | null = null;
     scoring$: Observable<Score[]>;
+    @Output() scoreUpdate = new EventEmitter<any>();
+
     private scoreUpdate$ = new Subject<{
         index: number;
         home: number;
@@ -128,6 +130,12 @@ export class GameScoringComponent implements OnInit {
                 awayTeam: away,
             }),
         );
+        this.scoreUpdate.emit({
+            scoreIndex: index,
+            homeTeam: home,
+            awayTeam: away,
+            endQuarter: false,
+        });
     }
 
     // Ends the quarter and saves score
@@ -140,6 +148,12 @@ export class GameScoringComponent implements OnInit {
                 endQuarter: true,
             }),
         );
+        this.scoreUpdate.emit({
+            scoreIndex: index,
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            endQuarter: true,
+        });
     }
 
     // Allows editing the quarter again

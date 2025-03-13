@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Team } from '../models/teams.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store/app.state';
-import { selectGameSettings } from '../store/game/game.seletors';
+import { selectGameSettings } from '../store/game/game.selectors';
 import { filter, Observable } from 'rxjs';
 
 @Component({

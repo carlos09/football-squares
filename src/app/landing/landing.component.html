@@ -10,14 +10,14 @@
 
         <button
             (click)="createGame()"
-            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md"
+            class="px-8 py-2 text-[17px] text-white bg-[dodgerblue] border-transparent rounded-md shadow-[2px_2px_4px_rgba(0,0,0,0.4)] transition-all duration-200 ease-in-out hover:bg-gradient-to-r hover:from-[rgba(30,144,255,1)] hover:to-[rgba(0,212,255,1)] active:translate-y-1"
         >
             Start a New Game
         </button>
         <button
             *ngIf="!(isAuthenticated$ | async)"
             (click)="login()"
-            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md"
+            class="px-8 py-2 text-[17px] text-white bg-[dodgerblue] border-transparent rounded-md shadow-[2px_2px_4px_rgba(0,0,0,0.4)] transition-all duration-200 ease-in-out hover:bg-gradient-to-r hover:from-[rgba(30,144,255,1)] hover:to-[rgba(0,212,255,1)] active:translate-y-1"
         >
             Login
         </button>

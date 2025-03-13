@@ -10,8 +10,10 @@
                     [yAxisNumbers]="(axisNumbers$ | async).yAxis"
                     [generated]="(numbersGenerated$ | async) ?? false"
                     [selectedSquares]="(selectedSquares$ | async) ?? []"
+                    [quarterScores]="scoring$ | async"
                     [takenSquares]="(gameUserSelections$ | async) ?? []"
                     (selectionChanged)="updateSelectedCount($event)"
+                    (quarterWinners)="saveWinners($event)"
                 ></app-game-grid>
 
                 <div class="p-4 flex gap-4">

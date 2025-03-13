@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { AppState } from '../store/app.state';
-import { selectGameStateData } from '../store/game/game.seletors';
+import { selectGameStateData } from '../store/game/game.selectors';
 import { Role } from '../enums/roles.enum';
 import * as GameActions from '../store/game/game.actions';
 

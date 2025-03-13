@@ -72,6 +72,10 @@
                 [class.cursor-not-allowed]="isTaken(num)"
                 [class.hover:scale-105]="!isTaken(num)"
                 [class.hover:shadow-lg]="!isTaken(num)"
+                [ngClass]="{
+                    'winning-square': isWinningSquare(num),
+                    'pending-score': isPendingSquare(num)
+                }"
             >
                 <lucide-icon
                     *ngIf="isTaken(num)"
