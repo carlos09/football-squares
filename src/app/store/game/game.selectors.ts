@@ -75,3 +75,18 @@ export const selectLiveQuarter = createSelector(selectGameState, (state) => {
 export const selectAxisNumbers = createSelector(selectGameState, (state) => {
     return state.axisNumbers;
 });
+
+export const selectQuarterScores = createSelector(
+    selectGameState,
+    (gameState) => {
+        if (!gameState?.scoring) return [];
+
+        return gameState.scoring.map((q, index) => ({
+            quarter: index + 1,
+            homeTeam: q.homeTeam,
+            awayTeam: q.awayTeam,
+            isLive: q.isLive,
+            hasEnded: q.hasEnded,
+        }));
+    },
+);

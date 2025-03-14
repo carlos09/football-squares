@@ -2,8 +2,9 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import * as userSelectors from 'src/app/store/user/user.selectors';
+import * as authSelectors from 'src/app/store/auth/auth.selectors';
 import { createUser } from 'src/app/store/user/user.actions';
-import { filter, Subject, takeUntil, tap } from 'rxjs';
+import { filter, Subject, takeUntil } from 'rxjs';
 
 @Component({
     selector: 'app-create-user-dialog',
@@ -24,33 +25,36 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        // ✅ Listen for error messages
         this.store
             .select(userSelectors.selectCreateUserError)
             .pipe(takeUntil(this.unsubscribe$))
             .subscribe((error) => {
-                this.errorMessage = error || ''; // Show error if applicable
+                this.errorMessage = error || '';
             });
 
-        // ✅ Continuously listen for userId until it's available
         this.store
             .select(userSelectors.selectUserId)
             .pipe(
-                tap((userId) => console.log('User from store:', userId)), // Debugging step
-                filter((userId) => !!userId), // Ensure userId is valid
-                takeUntil(this.unsubscribe$), // Keep listening until component is destroyed
+                filter((userId) => !!userId),
+                takeUntil(this.unsubscribe$),
             )
             .subscribe((userId) => {
-                console.log('User ID received:', userId);
-                localStorage.setItem('userId', userId); // Store userId
-                this.dialogRef.close(userId); // Close dialog with userId
+                localStorage.setItem('userId', userId);
+                this.dialogRef.close(userId);
+            });
+
+        this.store
+            .select(authSelectors.selectAuthToken)
+            .pipe(
+                filter((token) => !!token),
+                takeUntil(this.unsubscribe$),
+            )
+            .subscribe((token) => {
+                localStorage.setItem('token', token as string);
             });
     }
 
     createUser() {
-        console.log(`Creating user - username: ${this.username}`);
-        console.log('Game ID (if exists):', this.data?.gameId);
-
         if (!this.username || !this.password) {
             this.errorMessage = 'Username and password are required.';
             return;
@@ -60,7 +64,7 @@ export class CreateUserDialogComponent implements OnInit, OnDestroy {
             createUser({
                 username: this.username,
                 password: this.password,
-                gameId: this.data?.gameId, // Pass undefined if no gameId
+                gameId: this.data?.gameId,
             }),
         );
     }

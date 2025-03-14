@@ -160,4 +160,15 @@ export class GameService {
     createGameCode(): Observable<GameCode> {
         return this.http.post<GameCode>(`${this.baseUrl}/api/game-code`, {});
     }
+
+    updateQuarterWinner(
+        gameId: string,
+        quarter: number,
+        winner: string,
+    ): Observable<{ quarter: number; winner: string }> {
+        return this.http.put<{ quarter: number; winner: string }>(
+            `${this.baseUrl}/api/games/${gameId}/quarters/${quarter}/winner`,
+            { winner },
+        );
+    }
 }

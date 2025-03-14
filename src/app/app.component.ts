@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from './store/app.state';
+import * as AuthActions from './store/auth/auth.actions';
 
 @Component({
     selector: 'app-root',
@@ -9,7 +12,10 @@ import { Component, OnInit } from '@angular/core';
 export class AppComponent implements OnInit {
     title = 'football-squares';
     isDarkMode = false;
+
+    constructor(private store: Store<AppState>) {}
     ngOnInit(): void {
+        this.store.dispatch(AuthActions.loadAuthFromStorage());
         this.isDarkMode = localStorage.getItem('theme') === 'dark';
         this.updateTheme();
     }

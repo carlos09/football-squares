@@ -38,8 +38,9 @@ import {
     selectGameId,
     selectGameStateData,
     selectHaveNumbersBeenGenerated,
+    selectQuarterScores,
     selectUserSelectedSquares,
-} from '../store/game/game.seletors';
+} from '../store/game/game.selectors';
 import { Role } from '../enums/roles.enum';
 import { SquareSelection } from '../models/square-selection.model';
 
@@ -62,7 +63,9 @@ export class GameComponent implements OnInit, OnDestroy {
     isGameAdmin = false;
     role = Role;
     axisNumbers$: Observable<any>;
-
+    scoringUpdate: any;
+    quarterScoresFromStore: any[] = [];
+    scoring$: Observable<any>;
     private subscriptions = new Set<Subscription>();
 
     constructor(
@@ -96,6 +99,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.numbersGenerated$ = this.store.select(
             selectHaveNumbersBeenGenerated,
         );
+        this.scoring$ = this.store.select(selectQuarterScores);
 
         if (!this.userId) {
             this.openCreateUserDialog();
@@ -294,6 +298,21 @@ export class GameComponent implements OnInit, OnDestroy {
     startGame() {
         this.store.dispatch(
             GameActions.startGame({ gameId: this.gameId as any }),
+        );
+    }
+
+    scoreUpdate(scoreObj: any) {
+        this.scoringUpdate = scoreObj;
+    }
+
+    saveWinners(winner: any) {
+        console.log('winner: ', winner);
+        this.store.dispatch(
+            GameActions.updateQuarterWinner({
+                gameId: this.gameId as any,
+                quarter: winner.quarter,
+                winnerId: winner.winner,
+            }),
         );
     }
 }

@@ -5,7 +5,8 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 // const db = require('./services/db');
-
+const jwt = require('jsonwebtoken');
+const authenticateToken = require('./authMiddleware');
 const app = express();
 const PORT = process.env.PORT || 5001;
 const bcrypt = require('bcrypt');
@@ -140,14 +141,13 @@ app.post('/api/users/create', async (req, res) => {
 
         const userId = crypto.randomUUID();
         const hashedPassword = await bcrypt.hash(password, 10);
-        const defaultRoleId = 2; // Default to role 2 if not specified
+        const defaultRoleId = 2;
 
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
 
-            // Insert new user
             const userResult = await client.query(
                 `INSERT INTO users (id, username, password, role_id, has_paid, created_at) 
                  VALUES ($1, $2, $3, $4, false, NOW()) RETURNING id, username, role_id`,
@@ -156,55 +156,104 @@ app.post('/api/users/create', async (req, res) => {
 
             const user = userResult.rows[0];
 
-            // If gameId is provided, insert into user_games
             if (gameId) {
-                console.log(`Checking if game ${gameId} exists...`);
-
                 const gameCheck = await client.query(
                     `SELECT id FROM games WHERE id = $1`,
                     [gameId],
                 );
 
-                console.log('Game exists:', gameCheck.rows.length > 0);
-
                 if (gameCheck.rows.length > 0) {
-                    console.log(
-                        `Inserting user ${userId} into user_games with role ${defaultRoleId}...`,
-                    );
-
                     await client.query(
                         `INSERT INTO user_games (id, user_id, game_id, role_id, created_at) 
                          VALUES (gen_random_uuid(), $1, $2, $3, NOW())`,
                         [userId, gameId, defaultRoleId],
-                    );
-
-                    console.log('User successfully linked to game!');
-                } else {
-                    console.warn(
-                        `Game ${gameId} not found. Skipping user_games insert.`,
                     );
                 }
             }
 
             await client.query('COMMIT');
 
+            // Generate JWT
+            const token = jwt.sign(
+                {
+                    userId: user.id,
+                    username: user.username,
+                    roleId: user.role_id,
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' },
+            );
+
             res.json({
                 userId: user.id,
                 username: user.username,
-                roleId: user.role_id ?? defaultRoleId,
-                gameId: gameId || null, // Return the gameId if user was added to a game
+                roleId: user.role_id,
+                gameId: gameId || null,
+                token, // Return the JWT
             });
         } catch (err) {
             await client.query('ROLLBACK');
-            console.error('Transaction error:', err);
             res.status(500).json({ error: err.message });
         } finally {
             client.release();
         }
     } catch (err) {
-        console.error('Error creating user:', err);
         res.status(500).json({ error: err.message });
     }
+});
+
+// Login
+app.post('/api/users/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res
+            .status(400)
+            .json({ error: 'Username and password are required' });
+    }
+
+    try {
+        const client = await pool.connect();
+
+        const userResult = await client.query(
+            'SELECT id, username, password, role_id FROM users WHERE username = $1',
+            [username],
+        );
+
+        client.release();
+
+        if (userResult.rows.length === 0) {
+            return res
+                .status(401)
+                .json({ error: 'Invalid username or password' });
+        }
+
+        const user = userResult.rows[0];
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return res
+                .status(401)
+                .json({ error: 'Invalid username or password' });
+        }
+
+        // Generate JWT
+        const token = jwt.sign(
+            { userId: user.id, username: user.username, roleId: user.role_id },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' },
+        );
+
+        res.json({ token });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Logout
+app.post('/api/users/logout', (req, res) => {
+    // Logout is handled on the client-side by deleting the JWT
+    res.json({ message: 'Logged out successfully' });
 });
 
 app.get('/api/game/:gameCode', async (req, res) => {
@@ -253,36 +302,6 @@ app.post('/api/game/:gameId/settings', async (req, res) => {
     } catch (err) {
         console.error(`Error updating settings for game ${gameId}:`, err);
         res.status(500).json({ error: 'An error occurred' });
-    }
-});
-
-app.post('/api/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        // Find user by username
-        const result = await pool.query(
-            'SELECT * FROM users WHERE username = $1',
-            [username],
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(400).json({ error: 'User not found' });
-        }
-
-        const user = result.rows[0];
-
-        // Compare hashed password
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid credentials' });
-        }
-
-        res.json({ message: 'Login successful', user });
-    } catch (err) {
-        console.error('Login error:', err);
-        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -818,6 +837,33 @@ app.put('/api/games/:gameId/axis-numbers', async (req, res) => {
         );
     } catch (err) {
         console.error('Error saving axis numbers:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Add Quarter Winner
+app.put('/api/games/:gameId/quarters/:quarter/winner', async (req, res) => {
+    const { gameId, quarter } = req.params;
+    const { winner } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE game_scoring
+             SET winner = $1
+             WHERE game_id = $2 AND quarter = $3
+             RETURNING quarter, winner`,
+            [winner, gameId, quarter],
+        );
+
+        if (!result.rows.length) {
+            return res
+                .status(404)
+                .json({ error: 'Quarter not found for this game' });
+        }
+
+        res.json(result.rows[0]); // Return the updated quarter and winner
+    } catch (err) {
+        console.error('Error updating winner:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

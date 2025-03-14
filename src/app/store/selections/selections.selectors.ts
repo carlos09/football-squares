@@ -1,6 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { SelectionsState } from './selections.reducer';
-import { selectGameState } from '../game/game.seletors';
+import { selectGameState } from '../game/game.selectors';
 export const SELECTIONS_STATE_NAME = 'selections';
 
 export const selectSelectionsState = createFeatureSelector<SelectionsState>(
