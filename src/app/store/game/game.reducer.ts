@@ -8,6 +8,7 @@ import { GameSettings } from 'src/app/models/game-settings.model';
 export interface GameState {
     gameId: string | null;
     gameCode: string | null;
+    roleId: number | null;
     gameHasStarted: boolean;
     players: Player[];
     selections: SquareSelection[];
@@ -25,6 +26,7 @@ export interface GameState {
 export const initialState: GameState = {
     gameId: null,
     gameCode: null,
+    roleId: null,
     gameHasStarted: false,
     players: [],
     selections: [],
