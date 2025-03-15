@@ -39,7 +39,7 @@ export const selectGameUrl = createSelector(
 export const selectGameStateData = createSelector(selectGameState, (state) => ({
     gameId: state.gameId,
     gameCode: state.gameCode,
-    // roleId: state.roleId,
+    roleId: state.roleId,
     loading: state.loading,
     error: state.error,
     players: state.players,
