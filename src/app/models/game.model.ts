@@ -16,6 +16,7 @@ export interface Game {
         homeTeam: string;
         awayTeam: string;
         pricePerSquare: number;
+        payouts: { q1: number; q2: number; q3: number; q4: number };
     };
     xAxisNumbers: number[];
     yAxisNumbers: number[];

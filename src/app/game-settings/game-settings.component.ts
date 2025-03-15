@@ -18,7 +18,14 @@ export class GameSettingsComponent implements OnInit {
     gameTime: string = '';
     squarePrice: number = 0;
     settings$: Observable<any>;
+    isEditing = false;
     @Output() gameSettings = new EventEmitter();
+
+    payouts: Record<string, number>;
+    originalPayouts: Record<string, number>;
+    totalPayout = 100; // Expected total
+    currentTotal = 0;
+    isTotalValid = true;
 
     // NFL Game Start Times (Eastern Time)
     // gameTimes: string[] = [
@@ -44,16 +51,72 @@ export class GameSettingsComponent implements OnInit {
             this.awayTeam = settings.awayTeam || '';
             // this.gameTime = settings.gameTime || '';
             this.squarePrice = settings.pricePerSquare ?? 0;
+
+            if (settings.payouts) {
+                this.payouts = { ...settings.payouts };
+                this.originalPayouts = { ...this.payouts };
+            }
         });
+        this.calculateTotal();
     }
+
+    calculateTotal() {
+        this.currentTotal = Object.values(this.payouts).reduce(
+            (sum, value) => sum + value,
+            0,
+        );
+        this.isTotalValid = this.currentTotal === this.totalPayout;
+    }
+
+    toggleEditMode(): void {
+        this.isEditing = !this.isEditing;
+        if (!this.isEditing) {
+            this.payouts = this.originalPayouts;
+            this.calculateTotal();
+        }
+    }
+
+    onSliderChange(quarter: keyof typeof this.payouts, event: Event): void {
+        const target = event.target as HTMLInputElement;
+        this.payouts[quarter] = Number(target.value);
+        this.calculateTotal();
+    }
+
+    updatePayouts(quarter: 'q1' | 'q2' | 'q3' | 'q4', event: any) {
+        const newValue = event.value;
+        const otherTotal =
+            this.payouts['q1'] +
+            this.payouts['q2'] +
+            this.payouts['q3'] +
+            this.payouts['q4'] -
+            this.payouts[quarter];
+
+        // Ensure total remains 100%
+        const remaining = 100 - newValue;
+        if (remaining < 0) return;
+
+        this.payouts[quarter] = newValue;
+        const factor = remaining / otherTotal;
+
+        // Distribute remaining percentage proportionally
+        for (let key of Object.keys(this.payouts) as Array<
+            keyof typeof this.payouts
+        >) {
+            if (key !== quarter) {
+                this.payouts[key] = Math.round(this.payouts[key] * factor);
+            }
+        }
+    }
+
     onSubmit(): void {
         const savedSettings = {
             homeTeam: this.homeTeam,
             awayTeam: this.awayTeam,
-            // gameTime: this.gameTime,
             squarePrice: this.squarePrice,
+            payouts: { ...this.payouts },
         };
         this.gameSettings.emit(savedSettings);
+        this.isEditing = false;
         console.log('savedSettings: ', savedSettings);
     }
 }

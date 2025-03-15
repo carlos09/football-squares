@@ -291,6 +291,7 @@ export class GameComponent implements OnInit, OnDestroy {
                 homeTeam: settings.homeTeam,
                 awayTeam: settings.awayTeam,
                 pricePerSquare: settings.squarePrice,
+                payouts: settings.payouts,
             }),
         );
     }

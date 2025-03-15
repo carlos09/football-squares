@@ -35,6 +35,12 @@ export const initialState: GameState = {
         awayTeam: '',
         gameStartTime: '',
         pricePerSquare: 0,
+        payouts: {
+            q1: 20,
+            q2: 20,
+            q3: 20,
+            q4: 40,
+        },
     },
     haveNumbersBeenGenerated: false,
     axisNumbers: {
@@ -160,6 +166,7 @@ export const gameReducer = createReducer(
                 homeTeam: game.settings.homeTeam,
                 awayTeam: game.settings.awayTeam,
                 pricePerSquare: game.settings.pricePerSquare,
+                payouts: game.settings.payouts,
             },
             axisNumbers: {
                 xAxis: game.xAxisNumbers ?? Array(10).fill(0),
@@ -184,6 +191,7 @@ export const gameReducer = createReducer(
                 homeTeam: settings.homeTeam,
                 awayTeam: settings.awayTeam,
                 pricePerSquare: settings.pricePerSquare,
+                payouts: settings.payouts,
             },
             loading: false,
             error: null,

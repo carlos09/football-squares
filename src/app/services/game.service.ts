@@ -121,7 +121,7 @@ export class GameService {
     }
 
     saveGameSettings(gameId: string, settings: any): Observable<any> {
-        return this.http.post(`${this.baseUrl}/api/game/${gameId}/settings`, {
+        return this.http.put(`${this.baseUrl}/api/game/${gameId}/settings`, {
             settings,
         });
     }

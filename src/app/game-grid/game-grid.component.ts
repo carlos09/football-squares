@@ -50,6 +50,12 @@ export class GameGridComponent implements OnInit, OnChanges {
     constructor(private store: Store<AppState>) {}
 
     ngOnInit(): void {
+        this.store.select(selectGameSettings).subscribe((settings) => {
+            if (settings.homeTeam) {
+                this.homeTeam = settings?.homeTeam.toLowerCase();
+                this.awayTeam = settings?.awayTeam.toLowerCase();
+            }
+        });
         this.quarterScores$ = this.store.select(selectQuarterScores);
         this.initializeGrid();
     }

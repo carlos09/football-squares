@@ -5,15 +5,14 @@
         <form class="space-y-4" (ngSubmit)="onSubmit()">
             <!-- Home Team Select -->
             <div class="flex flex-col">
-                <label for="homeTeam" class="text-lg font-medium text-gray-700"
+                <label class="text-lg font-medium text-gray-700"
                     >Home Team</label
                 >
                 <select
-                    id="homeTeam"
-                    name="homeTeam"
                     [(ngModel)]="homeTeam"
-                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    name="homeTeam"
                     required
+                    class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm"
                 >
                     <option value="" disabled selected>Select Home Team</option>
                     <option *ngFor="let team of nflTeams" [value]="team.name">
@@ -24,15 +23,14 @@
 
             <!-- Away Team Select -->
             <div class="flex flex-col">
-                <label for="awayTeam" class="text-lg font-medium text-gray-700"
+                <label class="text-lg font-medium text-gray-700"
                     >Away Team</label
                 >
                 <select
-                    id="awayTeam"
-                    name="awayTeam"
                     [(ngModel)]="awayTeam"
-                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    name="awayTeam"
                     required
+                    class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm"
                 >
                     <option value="" disabled selected>Select Away Team</option>
                     <option *ngFor="let team of nflTeams" [value]="team.name">
@@ -41,48 +39,91 @@
                 </select>
             </div>
 
-            <!-- Game Time Select -->
-            <!-- <div class="flex flex-col">
-            <label for="gameTime" class="text-lg font-medium text-gray-700"
-                >Game Time</label
-            >
-            <select
-                id="gameTime"
-                name="gameTime"
-                [(ngModel)]="gameTime"
-                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                required
-            >
-                <option value="" disabled selected>Select Game Time</option>
-                <option *ngFor="let time of gameTimes" [value]="time">
-                    {{ time }}
-                </option>
-            </select>
-        </div> -->
-
             <!-- Square Price Input -->
             <div class="flex flex-col">
-                <label
-                    for="squarePrice"
-                    class="text-lg font-medium text-gray-700"
+                <label class="text-lg font-medium text-gray-700"
                     >Price Per Square</label
                 >
                 <input
                     type="number"
-                    id="squarePrice"
-                    name="squarePrice"
                     [(ngModel)]="squarePrice"
-                    placeholder="Enter price per square"
-                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    name="squarePrice"
                     required
+                    placeholder="Enter price per square"
+                    class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm"
                 />
+            </div>
+
+            <!-- Payout Sliders -->
+            <div class="mt-6">
+                <div class="payout-settings">
+                    <div class="flex items-center gap-6">
+                        <h3 class="text-lg font-medium text-gray-700">
+                            Payout Breakdown
+                        </h3>
+                        <a
+                            *ngIf="!isEditing"
+                            (click)="toggleEditMode()"
+                            class="text-blue-600 text-sm hover:underline"
+                            >Edit</a
+                        >
+                        <a
+                            *ngIf="isEditing"
+                            (click)="toggleEditMode()"
+                            class="text-red-600 text-sm hover:underline"
+                            >Cancel</a
+                        >
+                    </div>
+
+                    <!-- View Mode: Show percentages -->
+                    <div *ngIf="!isEditing">
+                        <ul class="list-none">
+                            <li>Q1: {{ payouts['q1'] }}%</li>
+                            <li>Q2: {{ payouts['q2'] }}%</li>
+                            <li>Q3: {{ payouts['q3'] }}%</li>
+                            <li>Q4: {{ payouts['q4'] }}%</li>
+                        </ul>
+                    </div>
+
+                    <!-- Edit Mode: Show sliders -->
+                    <div *ngIf="isEditing" class="flex flex-col gap-2 my-3">
+                        <div *ngFor="let quarter of ['q1', 'q2', 'q3', 'q4']">
+                            <label class="text-gray-400 text-sm font-semibold"
+                                >{{ quarter.toUpperCase() }}:
+                            </label>
+                            <div class="flex items-center gap-4">
+                                <mat-slider
+                                    showTickMarks
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    (input)="onSliderChange(quarter, $event)"
+                                    class="!w-full !mx-0 !-my-4"
+                                >
+                                    <input
+                                        matSliderThumb
+                                        [(ngModel)]="payouts[quarter]"
+                                        [ngModelOptions]="{
+                                            standalone: true
+                                        }"
+                                    />
+                                </mat-slider>
+                                {{ payouts[quarter] }}%
+                            </div>
+                        </div>
+                    </div>
+                    <p *ngIf="!isTotalValid" class="text-red-500 text-xs">
+                        Total must add up to 100%! Current: {{ currentTotal }}%
+                    </p>
+                </div>
             </div>
 
             <!-- Submit Button -->
             <div>
                 <button
                     type="submit"
-                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500"
+                    [disabled]="!isTotalValid"
                 >
                     Save Settings
                 </button>

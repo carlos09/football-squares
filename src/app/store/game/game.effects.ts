@@ -126,32 +126,36 @@ export class GameEffects {
     saveGameSettings$ = createEffect(() =>
         this.actions$.pipe(
             ofType(GameActions.saveGameSettings),
-            switchMap(({ gameId, homeTeam, awayTeam, pricePerSquare }) =>
-                this.gameService
-                    .saveGameSettings(gameId, {
-                        homeTeam,
-                        awayTeam,
-                        pricePerSquare,
-                    })
-                    .pipe(
-                        map((resp) => {
-                            console.log('SETTTING EFFECT: ', resp.settings);
-                            return GameActions.saveGameSettingsSuccess({
-                                homeTeam: resp.settings.homeTeam,
-                                awayTeam: resp.settings.awayTeam,
-                                pricePerSquare: resp.settings.pricePerSquare,
-                            });
-                        }),
-                        catchError((error) =>
-                            of(
-                                GameActions.saveGameSettingsFailure({
-                                    error:
-                                        error.message ||
-                                        'Failed to save game settings',
-                                }),
+            switchMap(
+                ({ gameId, homeTeam, awayTeam, pricePerSquare, payouts }) =>
+                    this.gameService
+                        .saveGameSettings(gameId, {
+                            homeTeam,
+                            awayTeam,
+                            pricePerSquare,
+                            payouts,
+                        })
+                        .pipe(
+                            map((resp) => {
+                                console.log('SETTTING EFFECT: ', resp.settings);
+                                return GameActions.saveGameSettingsSuccess({
+                                    homeTeam: resp.settings.homeTeam,
+                                    awayTeam: resp.settings.awayTeam,
+                                    pricePerSquare:
+                                        resp.settings.pricePerSquare,
+                                    payouts: resp.settings.payouts,
+                                });
+                            }),
+                            catchError((error) =>
+                                of(
+                                    GameActions.saveGameSettingsFailure({
+                                        error:
+                                            error.message ||
+                                            'Failed to save game settings',
+                                    }),
+                                ),
                             ),
                         ),
-                    ),
             ),
         ),
     );

@@ -278,11 +278,11 @@ app.get('/api/game/:gameCode', async (req, res) => {
 });
 
 // Saving Game Settings
-app.post('/api/game/:gameId/settings', async (req, res) => {
+app.put('/api/game/:gameId/settings', async (req, res) => {
     const { gameId } = req.params;
     const { settings } = req.body;
 
-    console.log(`Request save Game for ${gameId} with:`, settings);
+    console.log(`Updating Game Settings for ${gameId} with:`, settings);
 
     if (!settings || typeof settings !== 'object') {
         return res.status(400).json({ error: 'Invalid settings format' });
@@ -291,7 +291,7 @@ app.post('/api/game/:gameId/settings', async (req, res) => {
     try {
         const result = await pool.query(
             'UPDATE games SET saved_settings = $1 WHERE id = $2 RETURNING saved_settings',
-            [settings, gameId],
+            [JSON.stringify(settings), gameId],
         );
 
         if (result.rowCount === 0) {

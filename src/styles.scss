@@ -42,3 +42,13 @@ body {
     --tw-color-tan: var(--color-tan);
     --tw-color-redish: var(--color-redish);
 }
+
+// animation: var(--animate-ping);
+
+@keyframes ping {
+    75%,
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}

@@ -23,6 +23,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { GameComponent } from './game/game.component';
 import { LandingComponent } from './landing/landing.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
 import { HeaderComponent } from './header/header.component';
 import {
     LucideAngularModule,
@@ -69,6 +70,7 @@ import { LoginDialogComponent } from './dialog/login-dialog/login-dialog.compone
         MatInputModule,
         MatButtonModule,
         MatSlideToggleModule,
+        MatSliderModule,
         FormsModule,
         MatSnackBarModule,
         StoreModule.forRoot(appReducer),

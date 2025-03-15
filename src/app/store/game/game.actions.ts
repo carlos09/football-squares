@@ -123,6 +123,7 @@ export const saveGameSettings = createAction(
         homeTeam: string;
         awayTeam: string;
         pricePerSquare: number;
+        payouts: { q1: number; q2: number; q3: number; q4: number };
     }>(),
 );
 
@@ -132,6 +133,7 @@ export const saveGameSettingsSuccess = createAction(
         homeTeam: string;
         awayTeam: string;
         pricePerSquare: number;
+        payouts: { q1: number; q2: number; q3: number; q4: number };
     }>(),
 );
 
